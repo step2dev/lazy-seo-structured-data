@@ -1,3 +1,5 @@
 <?php
 
-uses(Tests\TestCase::class)->in('Feature');
+use Step2dev\LazySeoStructuredData\Tests\TestCase;
+
+uses(TestCase::class)->in('Feature');
