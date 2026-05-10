@@ -10,10 +10,12 @@ use Step2dev\LazySeoStructuredData\Builders\ContentSchemaBuilder;
 use Step2dev\LazySeoStructuredData\Builders\EventSchemaBuilder;
 use Step2dev\LazySeoStructuredData\Builders\IdentitySchemaBuilder;
 use Step2dev\LazySeoStructuredData\Builders\ListSchemaBuilder;
+use Step2dev\LazySeoStructuredData\Builders\OfferSchemaBuilder;
 use Step2dev\LazySeoStructuredData\Builders\PageSchemaBuilder;
 use Step2dev\LazySeoStructuredData\Support\CustomSchemaRegistry;
 use Step2dev\LazySeoStructuredData\Support\JsonLdRenderer;
 use Step2dev\LazySeoStructuredData\Support\SchemaGraph;
+use Step2dev\LazySeoStructuredData\Support\SchemaTypeMetadata;
 use Step2dev\LazySeoStructuredData\Support\SchemaTypeResolver;
 
 class SchemaService
@@ -23,12 +25,14 @@ class SchemaService
         private readonly CustomSchemaRegistry $customSchemas,
         private readonly SchemaGraph $graph,
         private readonly JsonLdRenderer $jsonLd,
+        private readonly SchemaTypeMetadata $metadata,
         private readonly PageSchemaBuilder $pages,
         private readonly ContentSchemaBuilder $content,
         private readonly CommerceSchemaBuilder $commerce,
         private readonly IdentitySchemaBuilder $identity,
         private readonly ListSchemaBuilder $lists,
         private readonly EventSchemaBuilder $events,
+        private readonly OfferSchemaBuilder $offers,
     ) {}
 
     public function make(string $type = 'webPage', array $data = []): array
@@ -73,12 +77,57 @@ class SchemaService
         return $this;
     }
 
+    /**
+     * @return list<string>
+     */
     public function types(): array
     {
         return array_values(array_unique([
             ...$this->types->availableTypes(),
             ...$this->customSchemas->types(),
         ]));
+    }
+
+    /**
+     * @return array<string, array{
+     *     type: string,
+     *     schema_org: string,
+     *     rich_result: bool,
+     *     notes: string|null,
+     *     required: list<string>,
+     *     recommended: list<string>,
+     *     optional: list<string>
+     * }>|array{
+     *     type: string,
+     *     schema_org: string,
+     *     rich_result: bool,
+     *     notes: string|null,
+     *     required: list<string>,
+     *     recommended: list<string>,
+     *     optional: list<string>
+     * }|null
+     */
+    public function metadata(?string $type = null): ?array
+    {
+        if ($type !== null) {
+            return $this->metadata->for($type);
+        }
+
+        return $this->metadata->all();
+    }
+
+    /**
+     * @return array{required: list<string>, recommended: list<string>, optional: list<string>}
+     */
+    public function fields(string $type): array
+    {
+        $metadata = $this->metadata->for($type);
+
+        return [
+            'required' => $metadata['required'] ?? [],
+            'recommended' => $metadata['recommended'] ?? [],
+            'optional' => $metadata['optional'] ?? [],
+        ];
     }
 
     public function toJson(array|Arrayable $schema): string
@@ -100,6 +149,7 @@ class SchemaService
     public function itemList(array $items = []): array { return $this->make('ItemList', ['items' => $items]); }
     public function event(array $data = []): array { return $this->make('event', $data); }
     public function recipe(array $data = []): array { return $this->make('recipe', $data); }
+    public function offer(array $data = []): array { return $this->make('offer', $data); }
 
     private function builder(string $builderClass): object
     {
@@ -110,6 +160,7 @@ class SchemaService
             IdentitySchemaBuilder::class => $this->identity,
             ListSchemaBuilder::class => $this->lists,
             EventSchemaBuilder::class => $this->events,
+            OfferSchemaBuilder::class => $this->offers,
             default => throw new LogicException("Unknown schema builder [{$builderClass}]."),
         };
     }

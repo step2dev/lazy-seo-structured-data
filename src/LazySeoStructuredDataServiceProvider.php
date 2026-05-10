@@ -19,6 +19,7 @@ use Step2dev\LazySeoStructuredData\Support\JsonLdRenderer;
 use Step2dev\LazySeoStructuredData\Support\JsonOptions;
 use Step2dev\LazySeoStructuredData\Support\SchemaCleaner;
 use Step2dev\LazySeoStructuredData\Support\SchemaGraph;
+use Step2dev\LazySeoStructuredData\Support\SchemaTypeMetadata;
 use Step2dev\LazySeoStructuredData\Support\SchemaTypeNormalizer;
 use Step2dev\LazySeoStructuredData\Support\SchemaTypeResolver;
 use Step2dev\LazySeoStructuredData\View\Components\JsonLdComponent;
@@ -43,6 +44,7 @@ class LazySeoStructuredDataServiceProvider extends PackageServiceProvider
             CustomSchemaRegistry::class,
             JsonLdRenderer::class,
             SchemaGraph::class,
+            SchemaTypeMetadata::class,
             SchemaTypeResolver::class,
             OfferSchemaBuilder::class,
             IdentitySchemaBuilder::class,

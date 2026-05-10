@@ -1,3 +1,10 @@
+## Unreleased
+
+- Added Schema.org field metadata for built-in schema types.
+- Added `Schema::metadata()` and `Schema::fields()`.
+- Updated `lazy-seo-structured-data:types` to show required, recommended, and optional fields.
+- Documented supported schema types and common Schema.org fields.
+
 # Changelog
 
 All notable changes to `lazy-seo-structured-data` will be documented in this file.

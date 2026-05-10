@@ -13,6 +13,8 @@ use Illuminate\Support\HtmlString;
  * @method static HtmlString renderSchema(array|\Illuminate\Contracts\Support\Arrayable $schema)
  * @method static self register(string $type, callable|string $builder)
  * @method static array types()
+ * @method static array|null metadata(?string $type = null)
+ * @method static array fields(string $type)
  * @method static string toJson(array|\Illuminate\Contracts\Support\Arrayable $schema)
  * @method static array webPage(array $data = [])
  * @method static array collectionPage(array $data = [])
@@ -28,6 +30,7 @@ use Illuminate\Support\HtmlString;
  * @method static array itemList(array $items = [])
  * @method static array event(array $data = [])
  * @method static array recipe(array $data = [])
+ * @method static array offer(array $data = [])
  */
 class Schema extends Facade
 {

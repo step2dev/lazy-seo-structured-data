@@ -183,8 +183,8 @@ it('lists built-in and custom schema types', function (): void {
 
     $schema->register('course', fn (): array => ['@type' => 'Course']);
 
-    expect($schema->types())->toContain('article')
-        ->and($schema->types())->toContain('website')
+    expect($schema->types())->toContain('Article')
+        ->and($schema->types())->toContain('WebSite')
         ->and($schema->types())->toContain('course');
 });
 
@@ -206,6 +206,7 @@ it('builds only schema.org supported public schema types', function (): void {
         'FAQPage' => ['items' => [['question' => 'Question?', 'answer' => 'Answer.']]],
         'Recipe' => ['name' => 'Recipe name'],
         'Product' => ['name' => 'Product name'],
+        'Offer' => ['price' => '49.00', 'priceCurrency' => 'USD'],
         'Organization' => ['name' => 'Organization name'],
         'Person' => ['name' => 'Person name'],
         'LocalBusiness' => ['name' => 'Business name'],
@@ -220,6 +221,24 @@ it('builds only schema.org supported public schema types', function (): void {
     foreach ($types as $type => $data) {
         expect($schema->make($type, $data)['@type'])->toBe($type);
     }
+});
+
+
+
+it('exposes schema type metadata with required recommended and optional fields', function (): void {
+    $schema = app(SchemaService::class);
+
+    expect($schema->metadata('Product'))->toMatchArray([
+        'type' => 'Product',
+        'schema_org' => 'https://schema.org/Product',
+        'required' => ['name'],
+    ])
+        ->and($schema->fields('Event')['required'])->toBe(['name', 'startDate', 'location'])
+        ->and($schema->fields('Article')['recommended'])->toContain('headline')
+        ->and($schema->metadata('Offer'))->toMatchArray([
+            'type' => 'Offer',
+            'required' => ['price', 'priceCurrency', 'availability', 'url'],
+        ]);
 });
 
 it('does not keep removed shorthand schema type aliases', function (): void {

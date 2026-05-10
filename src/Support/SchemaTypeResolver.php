@@ -8,12 +8,14 @@ use Step2dev\LazySeoStructuredData\Builders\ContentSchemaBuilder;
 use Step2dev\LazySeoStructuredData\Builders\EventSchemaBuilder;
 use Step2dev\LazySeoStructuredData\Builders\IdentitySchemaBuilder;
 use Step2dev\LazySeoStructuredData\Builders\ListSchemaBuilder;
+use Step2dev\LazySeoStructuredData\Builders\OfferSchemaBuilder;
 use Step2dev\LazySeoStructuredData\Builders\PageSchemaBuilder;
 
 final class SchemaTypeResolver
 {
     public function __construct(
         private readonly SchemaTypeNormalizer $normalizer,
+        private readonly SchemaTypeMetadata $metadata,
     ) {}
 
     public function resolve(string $type): array
@@ -34,7 +36,7 @@ final class SchemaTypeResolver
 
     public function availableTypes(): array
     {
-        return array_column($this->types(), 'schemaType');
+        return $this->metadata->typeNames();
     }
 
     /**
@@ -62,6 +64,10 @@ final class SchemaTypeResolver
             'product' => [
                 'schemaType' => 'Product',
                 'handler' => [CommerceSchemaBuilder::class, 'product'],
+            ],
+            'offer' => [
+                'schemaType' => 'Offer',
+                'handler' => [OfferSchemaBuilder::class, 'offer'],
             ],
             'organization' => [
                 'schemaType' => 'Organization',
