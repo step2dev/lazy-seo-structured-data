@@ -5,7 +5,7 @@ namespace Step2dev\LazySeoStructuredData\View\Components;
 use Illuminate\Contracts\View\Factory as ViewFactory;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
-use Step2dev\LazySeoStructuredData\Services\JsonLdService;
+use Step2dev\LazySeoStructuredData\Services\SchemaService;
 
 class JsonLdComponent extends Component
 {
@@ -17,12 +17,12 @@ class JsonLdComponent extends Component
 
     public function render(): View
     {
-        $jsonLd = app(JsonLdService::class);
+        $schema = app(SchemaService::class);
 
         return app(ViewFactory::class)->make('lazy-seo-structured-data::components.jsonld', [
             'jsonLd' => $this->graph !== []
-                ? $jsonLd->renderGraph($this->graph)
-                : $jsonLd->renderType($this->type, $this->data),
+                ? $schema->renderGraph($this->graph)
+                : $schema->render($this->type, $this->data),
         ]);
     }
 }

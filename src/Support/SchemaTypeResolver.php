@@ -22,7 +22,7 @@ final class SchemaTypeResolver
         $normalizedType = $this->normalizer->normalize($type);
 
         if (array_key_exists($normalizedType, $types)) {
-            return $types[$normalizedType];
+            return $types[$normalizedType]['handler'];
         }
 
         if (config('lazy-seo-structured-data.unknown_type_behavior', 'fallback') === 'exception') {
@@ -34,30 +34,71 @@ final class SchemaTypeResolver
 
     public function availableTypes(): array
     {
-        return array_keys($this->types());
+        return array_column($this->types(), 'schemaType');
     }
 
+    /**
+     * @return array<string, array{schemaType: string, handler: array{class-string, string}}>
+     */
     private function types(): array
     {
         return [
-            'article' => [ContentSchemaBuilder::class, 'article'],
-            'blogposting' => [ContentSchemaBuilder::class, 'blogPosting'],
-            'blogpost' => [ContentSchemaBuilder::class, 'blogPosting'],
-            'faqpage' => [ContentSchemaBuilder::class, 'faqPage'],
-            'faq' => [ContentSchemaBuilder::class, 'faqPage'],
-            'recipe' => [ContentSchemaBuilder::class, 'recipe'],
-            'product' => [CommerceSchemaBuilder::class, 'product'],
-            'organization' => [IdentitySchemaBuilder::class, 'organization'],
-            'person' => [IdentitySchemaBuilder::class, 'person'],
-            'localbusiness' => [IdentitySchemaBuilder::class, 'localBusiness'],
-            'breadcrumblist' => [ListSchemaBuilder::class, 'breadcrumbList'],
-            'breadcrumbs' => [ListSchemaBuilder::class, 'breadcrumbList'],
-            'itemlist' => [ListSchemaBuilder::class, 'itemList'],
-            'list' => [ListSchemaBuilder::class, 'itemList'],
-            'event' => [EventSchemaBuilder::class, 'event'],
-            'website' => [PageSchemaBuilder::class, 'webSite'],
-            'webpage' => [PageSchemaBuilder::class, 'webPage'],
-            'collectionpage' => [PageSchemaBuilder::class, 'collectionPage'],
+            'article' => [
+                'schemaType' => 'Article',
+                'handler' => [ContentSchemaBuilder::class, 'article'],
+            ],
+            'blogposting' => [
+                'schemaType' => 'BlogPosting',
+                'handler' => [ContentSchemaBuilder::class, 'blogPosting'],
+            ],
+            'faqpage' => [
+                'schemaType' => 'FAQPage',
+                'handler' => [ContentSchemaBuilder::class, 'faqPage'],
+            ],
+            'recipe' => [
+                'schemaType' => 'Recipe',
+                'handler' => [ContentSchemaBuilder::class, 'recipe'],
+            ],
+            'product' => [
+                'schemaType' => 'Product',
+                'handler' => [CommerceSchemaBuilder::class, 'product'],
+            ],
+            'organization' => [
+                'schemaType' => 'Organization',
+                'handler' => [IdentitySchemaBuilder::class, 'organization'],
+            ],
+            'person' => [
+                'schemaType' => 'Person',
+                'handler' => [IdentitySchemaBuilder::class, 'person'],
+            ],
+            'localbusiness' => [
+                'schemaType' => 'LocalBusiness',
+                'handler' => [IdentitySchemaBuilder::class, 'localBusiness'],
+            ],
+            'breadcrumblist' => [
+                'schemaType' => 'BreadcrumbList',
+                'handler' => [ListSchemaBuilder::class, 'breadcrumbList'],
+            ],
+            'itemlist' => [
+                'schemaType' => 'ItemList',
+                'handler' => [ListSchemaBuilder::class, 'itemList'],
+            ],
+            'event' => [
+                'schemaType' => 'Event',
+                'handler' => [EventSchemaBuilder::class, 'event'],
+            ],
+            'website' => [
+                'schemaType' => 'WebSite',
+                'handler' => [PageSchemaBuilder::class, 'webSite'],
+            ],
+            'webpage' => [
+                'schemaType' => 'WebPage',
+                'handler' => [PageSchemaBuilder::class, 'webPage'],
+            ],
+            'collectionpage' => [
+                'schemaType' => 'CollectionPage',
+                'handler' => [PageSchemaBuilder::class, 'collectionPage'],
+            ],
         ];
     }
 }

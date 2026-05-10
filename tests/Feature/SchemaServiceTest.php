@@ -1,6 +1,5 @@
 <?php
 
-use Step2dev\LazySeoStructuredData\Services\JsonLdService;
 use Step2dev\LazySeoStructuredData\Services\SchemaService;
 
 it('builds article schema', function (): void {
@@ -24,7 +23,7 @@ it('builds article schema', function (): void {
 });
 
 it('builds breadcrumb list schema', function (): void {
-    $schema = app(SchemaService::class)->make('breadcrumbs', [
+    $schema = app(SchemaService::class)->make('BreadcrumbList', [
         'items' => [
             ['name' => 'Home', 'url' => 'https://example.com'],
             ['name' => 'Blog', 'url' => 'https://example.com/blog'],
@@ -89,7 +88,7 @@ it('can throw an exception for unknown types', function (): void {
 })->throws(InvalidArgumentException::class, 'Unknown structured data type [unknown-type].');
 
 it('builds item list schema', function (): void {
-    $schema = app(SchemaService::class)->make('itemList', [
+    $schema = app(SchemaService::class)->make('ItemList', [
         'items' => ['First', 'Second'],
     ]);
 
@@ -101,32 +100,6 @@ it('builds item list schema', function (): void {
             ['@type' => 'ListItem', 'position' => 2, 'name' => 'Second'],
         ],
     ]);
-});
-
-it('renders json ld script', function (): void {
-    $html = app(JsonLdService::class)->script('faq', [
-        'items' => [
-            ['question' => 'What is Lazy SEO?', 'answer' => 'A Laravel SEO toolkit.'],
-        ],
-    ]);
-
-    expect((string) $html)->toContain('application/ld+json')
-        ->and((string) $html)->toContain('FAQPage')
-        ->and((string) $html)->toContain('What is Lazy SEO?');
-});
-
-it('renders json ld graph script', function (): void {
-    $schema = app(SchemaService::class);
-
-    $html = app(JsonLdService::class)->scriptGraph([
-        $schema->make('organization', ['name' => 'Step2Dev']),
-        $schema->make('website', ['name' => 'step2.dev']),
-    ]);
-
-    expect((string) $html)->toContain('application/ld+json')
-        ->and((string) $html)->toContain('@graph')
-        ->and((string) $html)->toContain('Organization')
-        ->and((string) $html)->toContain('WebSite');
 });
 
 it('removes nested empty values recursively', function (): void {
@@ -223,3 +196,34 @@ it('has package lifecycle pieces registered', function (): void {
         ->and(view()->exists('lazy-seo-structured-data::components.jsonld'))->toBeTrue()
         ->and(config('lazy-seo-structured-data.enabled'))->toBeTrue();
 });
+
+it('builds only schema.org supported public schema types', function (): void {
+    $schema = app(SchemaService::class);
+
+    $types = [
+        'Article' => ['title' => 'Article title'],
+        'BlogPosting' => ['title' => 'Blog post title'],
+        'FAQPage' => ['items' => [['question' => 'Question?', 'answer' => 'Answer.']]],
+        'Recipe' => ['name' => 'Recipe name'],
+        'Product' => ['name' => 'Product name'],
+        'Organization' => ['name' => 'Organization name'],
+        'Person' => ['name' => 'Person name'],
+        'LocalBusiness' => ['name' => 'Business name'],
+        'BreadcrumbList' => ['items' => [['name' => 'Home', 'url' => 'https://example.com']]],
+        'ItemList' => ['items' => ['First item']],
+        'Event' => ['name' => 'Event name', 'start_date' => '2026-01-01'],
+        'WebSite' => ['name' => 'Website name', 'url' => 'https://example.com'],
+        'WebPage' => ['title' => 'Page title', 'url' => 'https://example.com/page'],
+        'CollectionPage' => ['title' => 'Collection title', 'url' => 'https://example.com/items'],
+    ];
+
+    foreach ($types as $type => $data) {
+        expect($schema->make($type, $data)['@type'])->toBe($type);
+    }
+});
+
+it('does not keep removed shorthand schema type aliases', function (): void {
+    config()->set('lazy-seo-structured-data.unknown_type_behavior', 'exception');
+
+    app(SchemaService::class)->make('faq');
+})->throws(InvalidArgumentException::class, 'Unknown structured data type [faq].');

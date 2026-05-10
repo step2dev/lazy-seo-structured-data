@@ -3,10 +3,6 @@
 return [
     'enabled' => true,
 
-    'components' => [
-        'register_legacy_aliases' => true,
-    ],
-
     'unknown_type_behavior' => 'fallback', // fallback|exception
 
     'custom_types' => [

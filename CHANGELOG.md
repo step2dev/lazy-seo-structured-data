@@ -2,14 +2,13 @@
 
 All notable changes to `lazy-seo-structured-data` will be documented in this file.
 
-## v1.0.0 - unreleased
+## v1.0.0
 
-- Added clean public API: `Schema::make()`, `Schema::graph()`, `Schema::render()`, `Schema::renderGraph()`.
-- Added JSON-LD graph rendering.
-- Added custom schema registration via `Schema::register()` and `custom_types` config.
-- Added `lazy-seo-structured-data:types` command.
-- Added strict/fallback behavior for unknown schema types.
-- Added recursive schema cleaning.
-- Added grouped schema builders and support services.
-- Added Blade component for JSON-LD rendering.
-- Added lifecycle and rendering tests.
+- Added clean Schema.org-first public API.
+- Added JSON-LD rendering.
+- Added schema graph support.
+- Added custom schema registration.
+- Added strict unknown type mode.
+- Added Laravel Blade component.
+- Added Artisan command for listing available schema types.
+- Removed legacy helpers, deprecated script aliases, duplicate JSON-LD service, and legacy Blade component aliases.

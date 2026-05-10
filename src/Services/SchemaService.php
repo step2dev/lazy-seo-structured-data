@@ -50,12 +50,17 @@ class SchemaService
 
     public function render(string $type = 'webPage', array $data = []): HtmlString
     {
-        return $this->jsonLd->render($this->make($type, $data));
+        return $this->renderSchema($this->make($type, $data));
     }
 
     public function renderGraph(array $schemas): HtmlString
     {
-        return $this->jsonLd->render($this->graph($schemas));
+        return $this->renderSchema($this->graph($schemas));
+    }
+
+    public function renderSchema(array|Arrayable $schema): HtmlString
+    {
+        return $this->jsonLd->render($schema);
     }
 
     /**
@@ -81,18 +86,6 @@ class SchemaService
         return $this->jsonLd->encode($schema);
     }
 
-    /** @deprecated Use render(). */
-    public function script(string $type = 'webPage', array $data = []): HtmlString
-    {
-        return $this->render($type, $data);
-    }
-
-    /** @deprecated Use renderGraph(). */
-    public function scriptGraph(array $schemas): HtmlString
-    {
-        return $this->renderGraph($schemas);
-    }
-
     public function webPage(array $data = []): array { return $this->make('webPage', $data); }
     public function collectionPage(array $data = []): array { return $this->make('collectionPage', $data); }
     public function article(array $data = []): array { return $this->make('article', $data); }
@@ -102,9 +95,9 @@ class SchemaService
     public function person(array $data = []): array { return $this->make('person', $data); }
     public function localBusiness(array $data = []): array { return $this->make('localBusiness', $data); }
     public function webSite(array $data = []): array { return $this->make('webSite', $data); }
-    public function breadcrumbList(array $items = []): array { return $this->make('breadcrumbs', ['items' => $items]); }
-    public function faqPage(array $items = []): array { return $this->make('faq', ['items' => $items]); }
-    public function itemList(array $items = []): array { return $this->make('itemList', ['items' => $items]); }
+    public function breadcrumbList(array $items = []): array { return $this->make('BreadcrumbList', ['items' => $items]); }
+    public function faqPage(array $items = []): array { return $this->make('FAQPage', ['items' => $items]); }
+    public function itemList(array $items = []): array { return $this->make('ItemList', ['items' => $items]); }
     public function event(array $data = []): array { return $this->make('event', $data); }
     public function recipe(array $data = []): array { return $this->make('recipe', $data); }
 

@@ -20,12 +20,10 @@ php artisan vendor:publish --tag="lazy-seo-structured-data-config"
 
 ## Main API
 
-The package has one clean flow:
-
 ```php
 use Step2dev\LazySeoStructuredData\Facades\Schema;
 
-$schema = Schema::make('article', [
+$schema = Schema::make('Article', [
     'title' => 'Laravel SEO Tools',
     'description' => 'SEO toolkit for Laravel.',
     'author' => 'Step2Dev',
@@ -36,7 +34,7 @@ $schema = Schema::make('article', [
 Render JSON-LD directly:
 
 ```php
-echo Schema::render('article', [
+echo Schema::render('Article', [
     'title' => 'Laravel SEO Tools',
 ]);
 ```
@@ -45,35 +43,40 @@ Render a graph:
 
 ```php
 $graph = Schema::graph([
-    Schema::make('organization', ['name' => 'Step2Dev']),
-    Schema::make('website', ['name' => 'step2.dev']),
-    Schema::make('article', ['title' => 'Laravel SEO Tools']),
+    Schema::make('Organization', ['name' => 'Step2Dev']),
+    Schema::make('WebSite', ['name' => 'step2.dev']),
+    Schema::make('Article', ['title' => 'Laravel SEO Tools']),
 ]);
 
 echo Schema::renderGraph($graph);
 ```
 
-## Helpers
+Render an already built schema:
 
 ```php
-seo_schema('article', ['title' => 'Laravel SEO Tools']);
+echo Schema::renderSchema($schema);
+```
+
+## Helpers
+
+The package keeps only three helpers:
+
+```php
+seo_schema('Article', ['title' => 'Laravel SEO Tools']);
+
 seo_schema_graph([
-    seo_schema('organization', ['name' => 'Step2Dev']),
-    seo_schema('website', ['name' => 'step2.dev']),
+    seo_schema('Organization', ['name' => 'Step2Dev']),
+    seo_schema('WebSite', ['name' => 'step2.dev']),
 ]);
 
-seo_jsonld('article', ['title' => 'Laravel SEO Tools']);
 seo_jsonld_render($schema);
-seo_jsonld_graph([$organizationSchema, $websiteSchema]);
 ```
 
 ## Blade component
 
-Preferred component:
-
 ```blade
 <x-lazy-seo-structured-data::json-ld
-    type="article"
+    type="Article"
     :data="[
         'title' => 'Laravel SEO Tools',
         'author' => 'Step2Dev',
@@ -87,41 +90,28 @@ Graph:
 <x-lazy-seo-structured-data::json-ld :graph="$schemas" />
 ```
 
-Legacy aliases are still available by default:
+## Supported Schema.org types
 
-```blade
-<x-lazy-seo-jsonld />
-<x-lazy-seo-schema />
-<x-lazy-seo::json-ld />
-<x-lazy-seo::schema />
-```
+The public schema names below match real Schema.org types.
 
-Disable them:
+| Public type | Schema.org URL |
+|---|---|
+| `Article` | `https://schema.org/Article` |
+| `BlogPosting` | `https://schema.org/BlogPosting` |
+| `FAQPage` | `https://schema.org/FAQPage` |
+| `Recipe` | `https://schema.org/Recipe` |
+| `Product` | `https://schema.org/Product` |
+| `Organization` | `https://schema.org/Organization` |
+| `Person` | `https://schema.org/Person` |
+| `LocalBusiness` | `https://schema.org/LocalBusiness` |
+| `BreadcrumbList` | `https://schema.org/BreadcrumbList` |
+| `ItemList` | `https://schema.org/ItemList` |
+| `Event` | `https://schema.org/Event` |
+| `WebSite` | `https://schema.org/WebSite` |
+| `WebPage` | `https://schema.org/WebPage` |
+| `CollectionPage` | `https://schema.org/CollectionPage` |
 
-```php
-'components' => [
-    'register_legacy_aliases' => false,
-],
-```
-
-## Supported schema types
-
-| Type | Aliases | Schema.org type |
-|---|---|---|
-| `webpage` | `web_page` | `WebPage` |
-| `collectionpage` | `collection_page` | `CollectionPage` |
-| `website` | `web_site` | `WebSite` |
-| `article` | - | `Article` |
-| `blogposting` | `blog_post` | `BlogPosting` |
-| `faq` | `faq_page` | `FAQPage` |
-| `recipe` | - | `Recipe` |
-| `product` | - | `Product` |
-| `organization` | - | `Organization` |
-| `person` | - | `Person` |
-| `localbusiness` | `local_business` | `LocalBusiness` |
-| `breadcrumbs` | `breadcrumb_list` | `BreadcrumbList` |
-| `itemlist` | `item_list`, `list` | `ItemList` |
-| `event` | - | `Event` |
+Input is case-insensitive and tolerant to separators, so `WebPage`, `webPage`, `web_page`, and `web-page` resolve to the same type. Short aliases like `faq`, `breadcrumbs`, and `list` are intentionally not part of the public API.
 
 List available types from CLI:
 
@@ -166,7 +156,7 @@ Runtime registration:
 ```php
 use Step2dev\LazySeoStructuredData\Facades\Schema;
 
-Schema::register('course', function (array $data): array {
+Schema::register('Course', function (array $data): array {
     return [
         '@context' => 'https://schema.org',
         '@type' => 'Course',
@@ -175,7 +165,7 @@ Schema::register('course', function (array $data): array {
     ];
 });
 
-Schema::render('course', [
+Schema::render('Course', [
     'name' => 'Laravel Package Development',
 ]);
 ```
@@ -184,7 +174,7 @@ Config registration:
 
 ```php
 'custom_types' => [
-    'course' => App\Support\Seo\CourseSchema::class,
+    'Course' => App\Support\Seo\CourseSchema::class,
 ],
 ```
 
@@ -204,7 +194,7 @@ final class CourseSchema
 }
 ```
 
-## Strict unknown type mode
+## Unknown type behavior
 
 Default behavior falls back to `WebPage` for unknown schema types.
 
@@ -232,7 +222,7 @@ For stricter projects:
 
 ```text
 src/Builders     Schema builders grouped by responsibility
-src/Services     Public orchestration services
+src/Services     Public orchestration service
 src/Support      Registry, cleaner, resolver, graph and JSON-LD renderer
 src/Commands     Artisan tooling
 ```
@@ -246,7 +236,3 @@ composer test
 composer analyse
 composer format
 ```
-
-## License
-
-MIT
