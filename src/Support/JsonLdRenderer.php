@@ -3,6 +3,7 @@
 namespace Step2dev\LazySeoStructuredData\Support;
 
 use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Support\HtmlString;
 
 final class JsonLdRenderer
 {
@@ -18,8 +19,8 @@ final class JsonLdRenderer
         return $json === false ? '{}' : $json;
     }
 
-    public function script(array|Arrayable $schema): string
+    public function render(array|Arrayable $schema): HtmlString
     {
-        return '<script type="application/ld+json">'.$this->encode($schema).'</script>';
+        return new HtmlString('<script type="application/ld+json">'.$this->encode($schema).'</script>');
     }
 }

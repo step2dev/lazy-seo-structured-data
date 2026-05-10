@@ -3,6 +3,7 @@
 namespace Step2dev\LazySeoStructuredData\Services;
 
 use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Support\HtmlString;
 use LogicException;
 use Step2dev\LazySeoStructuredData\Builders\CommerceSchemaBuilder;
 use Step2dev\LazySeoStructuredData\Builders\ContentSchemaBuilder;
@@ -10,6 +11,7 @@ use Step2dev\LazySeoStructuredData\Builders\EventSchemaBuilder;
 use Step2dev\LazySeoStructuredData\Builders\IdentitySchemaBuilder;
 use Step2dev\LazySeoStructuredData\Builders\ListSchemaBuilder;
 use Step2dev\LazySeoStructuredData\Builders\PageSchemaBuilder;
+use Step2dev\LazySeoStructuredData\Support\CustomSchemaRegistry;
 use Step2dev\LazySeoStructuredData\Support\JsonLdRenderer;
 use Step2dev\LazySeoStructuredData\Support\SchemaGraph;
 use Step2dev\LazySeoStructuredData\Support\SchemaTypeResolver;
@@ -18,6 +20,7 @@ class SchemaService
 {
     public function __construct(
         private readonly SchemaTypeResolver $types,
+        private readonly CustomSchemaRegistry $customSchemas,
         private readonly SchemaGraph $graph,
         private readonly JsonLdRenderer $jsonLd,
         private readonly PageSchemaBuilder $pages,
@@ -30,6 +33,10 @@ class SchemaService
 
     public function make(string $type = 'webPage', array $data = []): array
     {
+        if ($this->customSchemas->has($type)) {
+            return $this->customSchemas->make($type, $data);
+        }
+
         [$builderClass, $method] = $this->types->resolve($type);
         $builder = $this->builder($builderClass);
 
@@ -41,19 +48,49 @@ class SchemaService
         return $this->graph->make($schemas);
     }
 
+    public function render(string $type = 'webPage', array $data = []): HtmlString
+    {
+        return $this->jsonLd->render($this->make($type, $data));
+    }
+
+    public function renderGraph(array $schemas): HtmlString
+    {
+        return $this->jsonLd->render($this->graph($schemas));
+    }
+
+    /**
+     * @param callable|class-string $builder
+     */
+    public function register(string $type, callable|string $builder): self
+    {
+        $this->customSchemas->register($type, $builder);
+
+        return $this;
+    }
+
+    public function types(): array
+    {
+        return array_values(array_unique([
+            ...$this->types->availableTypes(),
+            ...$this->customSchemas->types(),
+        ]));
+    }
+
     public function toJson(array|Arrayable $schema): string
     {
         return $this->jsonLd->encode($schema);
     }
 
-    public function script(string $type = 'webPage', array $data = []): string
+    /** @deprecated Use render(). */
+    public function script(string $type = 'webPage', array $data = []): HtmlString
     {
-        return $this->jsonLd->script($this->make($type, $data));
+        return $this->render($type, $data);
     }
 
-    public function scriptGraph(array $schemas): string
+    /** @deprecated Use renderGraph(). */
+    public function scriptGraph(array $schemas): HtmlString
     {
-        return $this->jsonLd->script($this->graph($schemas));
+        return $this->renderGraph($schemas);
     }
 
     public function webPage(array $data = []): array { return $this->make('webPage', $data); }

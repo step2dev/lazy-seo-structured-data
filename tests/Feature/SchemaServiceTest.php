@@ -110,9 +110,9 @@ it('renders json ld script', function (): void {
         ],
     ]);
 
-    expect($html)->toContain('application/ld+json')
-        ->and($html)->toContain('FAQPage')
-        ->and($html)->toContain('What is Lazy SEO?');
+    expect((string) $html)->toContain('application/ld+json')
+        ->and((string) $html)->toContain('FAQPage')
+        ->and((string) $html)->toContain('What is Lazy SEO?');
 });
 
 it('renders json ld graph script', function (): void {
@@ -123,10 +123,10 @@ it('renders json ld graph script', function (): void {
         $schema->make('website', ['name' => 'step2.dev']),
     ]);
 
-    expect($html)->toContain('application/ld+json')
-        ->and($html)->toContain('@graph')
-        ->and($html)->toContain('Organization')
-        ->and($html)->toContain('WebSite');
+    expect((string) $html)->toContain('application/ld+json')
+        ->and((string) $html)->toContain('@graph')
+        ->and((string) $html)->toContain('Organization')
+        ->and((string) $html)->toContain('WebSite');
 });
 
 it('removes nested empty values recursively', function (): void {
@@ -160,4 +160,66 @@ it('does not leak nested context into embedded schemas', function (): void {
 
     expect($schema['brand'])->not->toHaveKey('@context')
         ->and($schema['offers'])->not->toHaveKey('@context');
+});
+
+it('renders a schema through the main facade-style api', function (): void {
+    $html = app(SchemaService::class)->render('article', [
+        'title' => 'Clean API',
+    ]);
+
+    expect((string) $html)->toContain('application/ld+json')
+        ->and((string) $html)->toContain('Article')
+        ->and((string) $html)->toContain('Clean API');
+});
+
+it('renders a graph through the main facade-style api', function (): void {
+    $schema = app(SchemaService::class);
+
+    $html = $schema->renderGraph([
+        $schema->make('organization', ['name' => 'Step2Dev']),
+        $schema->make('website', ['name' => 'step2.dev']),
+    ]);
+
+    expect((string) $html)->toContain('@graph')
+        ->and((string) $html)->toContain('Organization')
+        ->and((string) $html)->toContain('WebSite');
+});
+
+it('registers a custom schema type at runtime', function (): void {
+    $schema = app(SchemaService::class);
+
+    $schema->register('course', fn (array $data): array => [
+        '@context' => 'https://schema.org',
+        '@type' => 'Course',
+        'name' => $data['name'] ?? null,
+        'description' => $data['description'] ?? null,
+    ]);
+
+    expect($schema->make('course', [
+        'name' => 'Laravel Package Development',
+        'description' => 'Build production-ready Laravel packages.',
+    ]))->toMatchArray([
+        '@context' => 'https://schema.org',
+        '@type' => 'Course',
+        'name' => 'Laravel Package Development',
+    ]);
+});
+
+it('lists built-in and custom schema types', function (): void {
+    $schema = app(SchemaService::class);
+
+    $schema->register('course', fn (): array => ['@type' => 'Course']);
+
+    expect($schema->types())->toContain('article')
+        ->and($schema->types())->toContain('website')
+        ->and($schema->types())->toContain('course');
+});
+
+it('has package lifecycle pieces registered', function (): void {
+    expect(class_exists(\Step2dev\LazySeoStructuredData\Facades\Schema::class))->toBeTrue()
+        ->and(function_exists('seo_schema'))->toBeTrue()
+        ->and(function_exists('seo_schema_graph'))->toBeTrue()
+        ->and(function_exists('seo_jsonld_render'))->toBeTrue()
+        ->and(view()->exists('lazy-seo-structured-data::components.jsonld'))->toBeTrue()
+        ->and(config('lazy-seo-structured-data.enabled'))->toBeTrue();
 });

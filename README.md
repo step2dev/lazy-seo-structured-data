@@ -18,12 +18,14 @@ composer require step2dev/lazy-seo-structured-data
 php artisan vendor:publish --tag="lazy-seo-structured-data-config"
 ```
 
-## Usage
+## Main API
+
+The package has one clean flow:
 
 ```php
 use Step2dev\LazySeoStructuredData\Facades\Schema;
 
-$schema = Schema::article([
+$schema = Schema::make('article', [
     'title' => 'Laravel SEO Tools',
     'description' => 'SEO toolkit for Laravel.',
     'author' => 'Step2Dev',
@@ -31,121 +33,61 @@ $schema = Schema::article([
 ]);
 ```
 
-Generic API:
+Render JSON-LD directly:
 
 ```php
-$schema = Schema::make('article', [
+echo Schema::render('article', [
     'title' => 'Laravel SEO Tools',
 ]);
 ```
 
-Blade:
-
-```blade
-<x-lazy-seo-structured-data-jsonld type="article" :data="[
-    'title' => 'Laravel SEO Tools',
-    'author' => 'Step2Dev',
-]" />
-```
-
-Helpers:
-
-```php
-seo_schema('article', []);
-seo_jsonld('article', []);
-seo_jsonld_render($schema);
-```
-
-## Graph
+Render a graph:
 
 ```php
 $graph = Schema::graph([
-    Schema::organization(['name' => 'Step2Dev']),
-    Schema::webSite(['name' => 'step2.dev']),
-    Schema::article(['title' => 'Laravel SEO Tools']),
+    Schema::make('organization', ['name' => 'Step2Dev']),
+    Schema::make('website', ['name' => 'step2.dev']),
+    Schema::make('article', ['title' => 'Laravel SEO Tools']),
 ]);
+
+echo Schema::renderGraph($graph);
 ```
+
+## Helpers
+
+```php
+seo_schema('article', ['title' => 'Laravel SEO Tools']);
+seo_schema_graph([
+    seo_schema('organization', ['name' => 'Step2Dev']),
+    seo_schema('website', ['name' => 'step2.dev']),
+]);
+
+seo_jsonld('article', ['title' => 'Laravel SEO Tools']);
+seo_jsonld_render($schema);
+seo_jsonld_graph([$organizationSchema, $websiteSchema]);
+```
+
+## Blade component
+
+Preferred component:
 
 ```blade
-<x-lazy-seo-structured-data-jsonld :graph="$graph" />
+<x-lazy-seo-structured-data::json-ld
+    type="article"
+    :data="[
+        'title' => 'Laravel SEO Tools',
+        'author' => 'Step2Dev',
+    ]"
+/>
 ```
 
-```php
-seo_schema_graph([
-    seo_schema('organization'),
-    seo_schema('website'),
-]);
+Graph:
 
-seo_jsonld_graph([
-    seo_schema('organization'),
-    seo_schema('website'),
-]);
+```blade
+<x-lazy-seo-structured-data::json-ld :graph="$schemas" />
 ```
 
-## Supported schemas
-
-```php
-Schema::webPage([...]);
-Schema::collectionPage([...]);
-Schema::article([...]);
-Schema::blogPosting([...]);
-Schema::product([...]);
-Schema::organization([...]);
-Schema::person([...]);
-Schema::localBusiness([...]);
-Schema::webSite([...]);
-Schema::breadcrumbList([...]);
-Schema::faqPage([...]);
-Schema::itemList([...]);
-Schema::event([...]);
-Schema::recipe([...]);
-```
-
-## Examples
-
-```php
-Schema::breadcrumbList([
-    ['name' => 'Home', 'url' => 'https://example.com'],
-    ['name' => 'Blog', 'url' => 'https://example.com/blog'],
-]);
-
-Schema::faqPage([
-    ['question' => 'What is JSON-LD?', 'answer' => 'Structured data format.'],
-]);
-
-Schema::product([
-    'name' => 'Laravel SEO Package',
-    'brand' => 'Step2Dev',
-    'price' => '49.00',
-    'price_currency' => 'USD',
-]);
-```
-
-## Config
-
-```php
-'unknown_type_behavior' => 'fallback', // fallback|exception
-
-'json' => [
-    'pretty' => true,
-    'unescaped_unicode' => true,
-    'unescaped_slashes' => true,
-],
-```
-
-## Internal structure
-
-```text
-src/Builders     Schema builders grouped by responsibility
-src/Services     Public orchestration services
-src/Support      Cleaner, resolver, graph and JSON-LD renderer
-```
-
-`SchemaService` now only resolves and delegates. JSON rendering, graph building, schema cleaning and type resolving are separate classes.
-
-## Legacy Blade aliases
-
-Legacy aliases are enabled by default:
+Legacy aliases are still available by default:
 
 ```blade
 <x-lazy-seo-jsonld />
@@ -161,6 +103,141 @@ Disable them:
     'register_legacy_aliases' => false,
 ],
 ```
+
+## Supported schema types
+
+| Type | Aliases | Schema.org type |
+|---|---|---|
+| `webpage` | `web_page` | `WebPage` |
+| `collectionpage` | `collection_page` | `CollectionPage` |
+| `website` | `web_site` | `WebSite` |
+| `article` | - | `Article` |
+| `blogposting` | `blog_post` | `BlogPosting` |
+| `faq` | `faq_page` | `FAQPage` |
+| `recipe` | - | `Recipe` |
+| `product` | - | `Product` |
+| `organization` | - | `Organization` |
+| `person` | - | `Person` |
+| `localbusiness` | `local_business` | `LocalBusiness` |
+| `breadcrumbs` | `breadcrumb_list` | `BreadcrumbList` |
+| `itemlist` | `item_list`, `list` | `ItemList` |
+| `event` | - | `Event` |
+
+List available types from CLI:
+
+```bash
+php artisan lazy-seo-structured-data:types
+```
+
+## Examples
+
+Breadcrumbs:
+
+```php
+Schema::breadcrumbList([
+    ['name' => 'Home', 'url' => 'https://example.com'],
+    ['name' => 'Blog', 'url' => 'https://example.com/blog'],
+]);
+```
+
+FAQ:
+
+```php
+Schema::faqPage([
+    ['question' => 'What is JSON-LD?', 'answer' => 'Structured data format.'],
+]);
+```
+
+Product:
+
+```php
+Schema::product([
+    'name' => 'Laravel SEO Package',
+    'brand' => 'Step2Dev',
+    'price' => '49.00',
+    'price_currency' => 'USD',
+]);
+```
+
+## Custom schema types
+
+Runtime registration:
+
+```php
+use Step2dev\LazySeoStructuredData\Facades\Schema;
+
+Schema::register('course', function (array $data): array {
+    return [
+        '@context' => 'https://schema.org',
+        '@type' => 'Course',
+        'name' => $data['name'] ?? null,
+        'description' => $data['description'] ?? null,
+    ];
+});
+
+Schema::render('course', [
+    'name' => 'Laravel Package Development',
+]);
+```
+
+Config registration:
+
+```php
+'custom_types' => [
+    'course' => App\Support\Seo\CourseSchema::class,
+],
+```
+
+The class must be invokable:
+
+```php
+final class CourseSchema
+{
+    public function __invoke(array $data): array
+    {
+        return [
+            '@context' => 'https://schema.org',
+            '@type' => 'Course',
+            'name' => $data['name'] ?? null,
+        ];
+    }
+}
+```
+
+## Strict unknown type mode
+
+Default behavior falls back to `WebPage` for unknown schema types.
+
+```php
+'unknown_type_behavior' => 'fallback', // fallback|exception
+```
+
+For stricter projects:
+
+```php
+'unknown_type_behavior' => 'exception',
+```
+
+## JSON output
+
+```php
+'json' => [
+    'pretty' => true,
+    'unescaped_unicode' => true,
+    'unescaped_slashes' => true,
+],
+```
+
+## Internal structure
+
+```text
+src/Builders     Schema builders grouped by responsibility
+src/Services     Public orchestration services
+src/Support      Registry, cleaner, resolver, graph and JSON-LD renderer
+src/Commands     Artisan tooling
+```
+
+`SchemaService` is the public API. Builders generate arrays. `JsonLdRenderer` renders final JSON-LD scripts. Custom schemas are handled by `CustomSchemaRegistry`.
 
 ## Testing
 

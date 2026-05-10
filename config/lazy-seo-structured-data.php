@@ -9,6 +9,10 @@ return [
 
     'unknown_type_behavior' => 'fallback', // fallback|exception
 
+    'custom_types' => [
+        // 'course' => App\Support\Seo\CourseSchema::class,
+    ],
+
     'defaults' => [
         'title' => env('APP_NAME', 'Laravel'),
         'description' => '',

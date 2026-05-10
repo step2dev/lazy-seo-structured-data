@@ -21,8 +21,8 @@ class JsonLdComponent extends Component
 
         return app(ViewFactory::class)->make('lazy-seo-structured-data::components.jsonld', [
             'jsonLd' => $this->graph !== []
-                ? $jsonLd->scriptGraph($this->graph)
-                : $jsonLd->script($this->type, $this->data),
+                ? $jsonLd->renderGraph($this->graph)
+                : $jsonLd->renderType($this->type, $this->data),
         ]);
     }
 }

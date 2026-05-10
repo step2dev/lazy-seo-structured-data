@@ -3,13 +3,18 @@
 namespace Step2dev\LazySeoStructuredData\Facades;
 
 use Illuminate\Support\Facades\Facade;
+use Illuminate\Support\HtmlString;
 
 /**
  * @method static array make(string $type = 'webPage', array $data = [])
  * @method static array graph(array $schemas)
+ * @method static HtmlString render(string $type = 'webPage', array $data = [])
+ * @method static HtmlString renderGraph(array $schemas)
+ * @method static self register(string $type, callable|string $builder)
+ * @method static array types()
  * @method static string toJson(array|\Illuminate\Contracts\Support\Arrayable $schema)
- * @method static string script(string $type = 'webPage', array $data = [])
- * @method static string scriptGraph(array $schemas)
+ * @method static HtmlString script(string $type = 'webPage', array $data = [])
+ * @method static HtmlString scriptGraph(array $schemas)
  * @method static array webPage(array $data = [])
  * @method static array collectionPage(array $data = [])
  * @method static array article(array $data = [])

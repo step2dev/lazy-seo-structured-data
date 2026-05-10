@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Blade;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Step2dev\LazySeoStructuredData\Builders\CommerceSchemaBuilder;
+use Step2dev\LazySeoStructuredData\Commands\ListSchemaTypesCommand;
 use Step2dev\LazySeoStructuredData\Builders\ContentSchemaBuilder;
 use Step2dev\LazySeoStructuredData\Builders\EventSchemaBuilder;
 use Step2dev\LazySeoStructuredData\Builders\IdentitySchemaBuilder;
@@ -14,10 +15,12 @@ use Step2dev\LazySeoStructuredData\Builders\OfferSchemaBuilder;
 use Step2dev\LazySeoStructuredData\Builders\PageSchemaBuilder;
 use Step2dev\LazySeoStructuredData\Services\JsonLdService;
 use Step2dev\LazySeoStructuredData\Services\SchemaService;
+use Step2dev\LazySeoStructuredData\Support\CustomSchemaRegistry;
 use Step2dev\LazySeoStructuredData\Support\JsonLdRenderer;
 use Step2dev\LazySeoStructuredData\Support\JsonOptions;
 use Step2dev\LazySeoStructuredData\Support\SchemaCleaner;
 use Step2dev\LazySeoStructuredData\Support\SchemaGraph;
+use Step2dev\LazySeoStructuredData\Support\SchemaTypeNormalizer;
 use Step2dev\LazySeoStructuredData\Support\SchemaTypeResolver;
 use Step2dev\LazySeoStructuredData\View\Components\JsonLdComponent;
 
@@ -28,14 +31,17 @@ class LazySeoStructuredDataServiceProvider extends PackageServiceProvider
         $package
             ->name('lazy-seo-structured-data')
             ->hasConfigFile()
-            ->hasViews();
+            ->hasViews()
+            ->hasCommand(ListSchemaTypesCommand::class);
     }
 
     public function packageRegistered(): void
     {
         foreach ([
+            SchemaTypeNormalizer::class,
             SchemaCleaner::class,
             JsonOptions::class,
+            CustomSchemaRegistry::class,
             JsonLdRenderer::class,
             SchemaGraph::class,
             SchemaTypeResolver::class,
@@ -54,6 +60,10 @@ class LazySeoStructuredDataServiceProvider extends PackageServiceProvider
 
         $this->app->alias(SchemaService::class, 'lazy-seo-structured-data.schema');
         $this->app->alias(JsonLdService::class, 'lazy-seo-structured-data.jsonld');
+
+        foreach (config('lazy-seo-structured-data.custom_types', []) as $type => $builder) {
+            $this->app->make(SchemaService::class)->register($type, $builder);
+        }
     }
 
     public function packageBooted(): void
@@ -62,6 +72,7 @@ class LazySeoStructuredDataServiceProvider extends PackageServiceProvider
             return;
         }
 
+        Blade::component('lazy-seo-structured-data::json-ld', JsonLdComponent::class);
         Blade::component('lazy-seo-structured-data-jsonld', JsonLdComponent::class);
         Blade::component('lazy-seo-structured-data-schema', JsonLdComponent::class);
 

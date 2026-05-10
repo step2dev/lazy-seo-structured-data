@@ -16,6 +16,18 @@ it('renders json ld blade component', function (): void {
         ->and($html)->toContain('Laravel SEO Tools');
 });
 
+it('renders namespaced json ld blade component', function (): void {
+    $html = Blade::render('<x-lazy-seo-structured-data::json-ld type="article" :data="$data" />', [
+        'data' => [
+            'title' => 'Namespaced component',
+        ],
+    ]);
+
+    expect($html)->toContain('application/ld+json')
+        ->and($html)->toContain('Article')
+        ->and($html)->toContain('Namespaced component');
+});
+
 it('renders json ld graph blade component', function (): void {
     $schema = app(SchemaService::class);
 

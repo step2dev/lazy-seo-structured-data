@@ -12,10 +12,14 @@ use Step2dev\LazySeoStructuredData\Builders\PageSchemaBuilder;
 
 final class SchemaTypeResolver
 {
+    public function __construct(
+        private readonly SchemaTypeNormalizer $normalizer,
+    ) {}
+
     public function resolve(string $type): array
     {
         $types = $this->types();
-        $normalizedType = str($type)->replace(['-', '_'], '')->lower()->toString();
+        $normalizedType = $this->normalizer->normalize($type);
 
         if (array_key_exists($normalizedType, $types)) {
             return $types[$normalizedType];
@@ -26,6 +30,11 @@ final class SchemaTypeResolver
         }
 
         return [PageSchemaBuilder::class, 'webPage'];
+    }
+
+    public function availableTypes(): array
+    {
+        return array_keys($this->types());
     }
 
     private function types(): array
