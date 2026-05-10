@@ -16,3 +16,13 @@ if (! function_exists('seo_jsonld')) {
         return app(JsonLdService::class)->script($type, $data);
     }
 }
+
+if (! function_exists('seo_jsonld_graph')) {
+    /**
+     * @param  array<int, array|\Illuminate\Contracts\Support\Arrayable>  $schemas
+     */
+    function seo_jsonld_graph(array $schemas): string
+    {
+        return app(JsonLdService::class)->scriptGraph($schemas);
+    }
+}

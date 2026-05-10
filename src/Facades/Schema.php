@@ -6,7 +6,9 @@ use Illuminate\Support\Facades\Facade;
 
 /**
  * @method static array make(string $type, array $data = [])
+ * @method static array graph(array $schemas)
  * @method static string script(string $type, array $data = [])
+ * @method static string scriptGraph(array $schemas)
  * @method static string toJson(array|\Illuminate\Contracts\Support\Arrayable $schema)
  */
 class Schema extends Facade

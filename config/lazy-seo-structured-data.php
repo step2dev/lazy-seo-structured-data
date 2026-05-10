@@ -7,6 +7,8 @@ return [
         'register_legacy_aliases' => true,
     ],
 
+    'unknown_type_behavior' => 'fallback', // fallback|exception
+
     'defaults' => [
         'title' => env('APP_NAME', 'Laravel'),
         'description' => '',

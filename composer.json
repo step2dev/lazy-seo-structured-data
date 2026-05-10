@@ -49,7 +49,7 @@
     "autoload-dev": {
         "psr-4": {
             "Step2dev\\LazySeoStructuredData\\Tests\\": "tests/",
-            "Tests\\": "tests/Legacy/"
+            "Workbench\\App\\": "workbench/app/"
         }
     },
     "scripts": {

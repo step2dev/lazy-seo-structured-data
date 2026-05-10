@@ -3,19 +3,78 @@
 namespace Step2dev\LazySeoStructuredData\Services;
 
 use Illuminate\Contracts\Support\Arrayable;
+use InvalidArgumentException;
 
 class SchemaService
 {
+    /**
+     * @var array<string, string>
+     */
+    protected array $typeMethods = [
+        'article' => 'article',
+        'blogposting' => 'blogPosting',
+        'blogpost' => 'blogPosting',
+        'product' => 'product',
+        'organization' => 'organization',
+        'person' => 'person',
+        'localbusiness' => 'localBusiness',
+        'website' => 'webSite',
+        'webpage' => 'webPage',
+        'collectionpage' => 'collectionPage',
+        'breadcrumblist' => 'breadcrumbList',
+        'breadcrumbs' => 'breadcrumbList',
+        'faqpage' => 'faqPage',
+        'faq' => 'faqPage',
+        'itemlist' => 'itemList',
+        'list' => 'itemList',
+        'event' => 'event',
+        'recipe' => 'recipe',
+    ];
+
     public function make(string $type, array $data = []): array
     {
-        $type = $this->normalizeType($type);
+        $method = $this->methodName($this->normalizeType($type), $type);
 
-        return $this->{$this->methodName($type)}($data);
+        return $this->{$method}($data);
+    }
+
+    /**
+     * @param  array<int, array|Arrayable>  $schemas
+     */
+    public function graph(array $schemas): array
+    {
+        if (array_key_exists('@graph', $schemas)) {
+            return $this->clean($schemas);
+        }
+
+        $graph = collect($schemas)
+            ->map(function (array|Arrayable $schema): array {
+                if ($schema instanceof Arrayable) {
+                    $schema = $schema->toArray();
+                }
+
+                unset($schema['@context']);
+
+                return $this->clean($schema);
+            })
+            ->filter()
+            ->values()
+            ->all();
+
+        return $this->clean([
+            '@context' => 'https://schema.org',
+            '@graph' => $graph,
+        ]);
     }
 
     public function script(string $type, array $data = []): string
     {
         return '<script type="application/ld+json">'.$this->toJson($this->make($type, $data)).'</script>';
+    }
+
+    public function scriptGraph(array $schemas): string
+    {
+        return '<script type="application/ld+json">'.$this->toJson($this->graph($schemas)).'</script>';
     }
 
     public function toJson(array|Arrayable $schema): string
@@ -24,7 +83,7 @@ class SchemaService
             $schema = $schema->toArray();
         }
 
-        return json_encode($this->clean($schema), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) ?: '{}';
+        return json_encode($this->clean($schema), $this->jsonFlags()) ?: '{}';
     }
 
     public function webPage(array $data = []): array
@@ -34,6 +93,16 @@ class SchemaService
             'description' => $data['description'] ?? config('lazy-seo-structured-data.defaults.description', ''),
             'url' => $data['url'] ?? request()->fullUrl(),
         ], $data);
+    }
+
+    public function collectionPage(array $data = []): array
+    {
+        return $this->base('CollectionPage', [
+            'name' => $data['name'] ?? $data['title'] ?? null,
+            'description' => $data['description'] ?? null,
+            'url' => $data['url'] ?? request()->fullUrl(),
+            'mainEntity' => isset($data['items']) ? $this->itemList($data['items']) : null,
+        ], $data, ['title']);
     }
 
     public function article(array $data = []): array
@@ -92,6 +161,16 @@ class SchemaService
         ], $data, ['same_as']);
     }
 
+    public function person(array $data = []): array
+    {
+        return $this->base('Person', [
+            'name' => $data['name'] ?? null,
+            'url' => $data['url'] ?? null,
+            'image' => $data['image'] ?? null,
+            'sameAs' => $data['same_as'] ?? $data['sameAs'] ?? null,
+        ], $data, ['same_as']);
+    }
+
     public function localBusiness(array $data = []): array
     {
         return $this->base('LocalBusiness', [
@@ -100,7 +179,7 @@ class SchemaService
             'telephone' => $data['telephone'] ?? $data['phone'] ?? null,
             'address' => $data['address'] ?? null,
             'openingHours' => $data['opening_hours'] ?? $data['openingHours'] ?? null,
-        ], $data);
+        ], $data, ['phone', 'opening_hours']);
     }
 
     public function webSite(array $data = []): array
@@ -150,6 +229,86 @@ class SchemaService
                     ],
                 ]);
             })->values()->all(),
+        ]);
+    }
+
+    public function itemList(array $items = []): array
+    {
+        if (array_key_exists('items', $items)) {
+            $items = $items['items'];
+        }
+
+        return $this->base('ItemList', [
+            'itemListElement' => collect($items)->values()->map(function (array|string $item, int $index): array {
+                if (is_array($item)) {
+                    return $this->clean(array_replace([
+                        '@type' => 'ListItem',
+                        'position' => $index + 1,
+                    ], $item));
+                }
+
+                return [
+                    '@type' => 'ListItem',
+                    'position' => $index + 1,
+                    'name' => $item,
+                ];
+            })->all(),
+        ]);
+    }
+
+    public function event(array $data = []): array
+    {
+        return $this->base('Event', [
+            'name' => $data['name'] ?? $data['title'] ?? null,
+            'description' => $data['description'] ?? null,
+            'startDate' => $data['start_date'] ?? $data['startDate'] ?? null,
+            'endDate' => $data['end_date'] ?? $data['endDate'] ?? null,
+            'eventStatus' => $data['event_status'] ?? $data['eventStatus'] ?? null,
+            'eventAttendanceMode' => $data['event_attendance_mode'] ?? $data['eventAttendanceMode'] ?? null,
+            'location' => $data['location'] ?? null,
+            'image' => $data['image'] ?? null,
+            'url' => $data['url'] ?? null,
+            'organizer' => $this->personOrOrganization($data['organizer'] ?? null),
+            'offers' => $this->offers($data['offers'] ?? $data),
+        ], $data, [
+            'title',
+            'start_date',
+            'end_date',
+            'event_status',
+            'event_attendance_mode',
+            'organizer',
+            'offers',
+            'price',
+            'price_currency',
+            'priceCurrency',
+            'availability',
+        ]);
+    }
+
+    public function recipe(array $data = []): array
+    {
+        return $this->base('Recipe', [
+            'name' => $data['name'] ?? $data['title'] ?? null,
+            'description' => $data['description'] ?? null,
+            'image' => $data['image'] ?? null,
+            'author' => $this->personOrOrganization($data['author'] ?? null),
+            'datePublished' => $data['date_published'] ?? $data['datePublished'] ?? null,
+            'prepTime' => $data['prep_time'] ?? $data['prepTime'] ?? null,
+            'cookTime' => $data['cook_time'] ?? $data['cookTime'] ?? null,
+            'totalTime' => $data['total_time'] ?? $data['totalTime'] ?? null,
+            'recipeYield' => $data['recipe_yield'] ?? $data['recipeYield'] ?? null,
+            'recipeIngredient' => $data['ingredients'] ?? $data['recipeIngredient'] ?? null,
+            'recipeInstructions' => $data['instructions'] ?? $data['recipeInstructions'] ?? null,
+        ], $data, [
+            'title',
+            'author',
+            'date_published',
+            'prep_time',
+            'cook_time',
+            'total_time',
+            'recipe_yield',
+            'ingredients',
+            'instructions',
         ]);
     }
 
@@ -225,18 +384,35 @@ class SchemaService
         return str($type)->replace(['-', '_'], '')->lower()->toString();
     }
 
-    protected function methodName(string $type): string
+    protected function methodName(string $normalizedType, string $originalType): string
     {
-        return match ($type) {
-            'article' => 'article',
-            'blogposting', 'blogpost' => 'blogPosting',
-            'product' => 'product',
-            'organization' => 'organization',
-            'localbusiness' => 'localBusiness',
-            'website' => 'webSite',
-            'breadcrumblist', 'breadcrumbs' => 'breadcrumbList',
-            'faqpage', 'faq' => 'faqPage',
-            default => 'webPage',
-        };
+        if (array_key_exists($normalizedType, $this->typeMethods)) {
+            return $this->typeMethods[$normalizedType];
+        }
+
+        if (config('lazy-seo-structured-data.unknown_type_behavior', 'fallback') === 'exception') {
+            throw new InvalidArgumentException("Unknown structured data type [{$originalType}].");
+        }
+
+        return 'webPage';
+    }
+
+    protected function jsonFlags(): int
+    {
+        $flags = 0;
+
+        if ((bool) config('lazy-seo-structured-data.json.pretty', true)) {
+            $flags |= JSON_PRETTY_PRINT;
+        }
+
+        if ((bool) config('lazy-seo-structured-data.json.unescaped_unicode', true)) {
+            $flags |= JSON_UNESCAPED_UNICODE;
+        }
+
+        if ((bool) config('lazy-seo-structured-data.json.unescaped_slashes', true)) {
+            $flags |= JSON_UNESCAPED_SLASHES;
+        }
+
+        return $flags;
     }
 }
