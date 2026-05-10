@@ -5,8 +5,20 @@ namespace Step2dev\LazySeoStructuredData;
 use Illuminate\Support\Facades\Blade;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
+use Step2dev\LazySeoStructuredData\Builders\CommerceSchemaBuilder;
+use Step2dev\LazySeoStructuredData\Builders\ContentSchemaBuilder;
+use Step2dev\LazySeoStructuredData\Builders\EventSchemaBuilder;
+use Step2dev\LazySeoStructuredData\Builders\IdentitySchemaBuilder;
+use Step2dev\LazySeoStructuredData\Builders\ListSchemaBuilder;
+use Step2dev\LazySeoStructuredData\Builders\OfferSchemaBuilder;
+use Step2dev\LazySeoStructuredData\Builders\PageSchemaBuilder;
 use Step2dev\LazySeoStructuredData\Services\JsonLdService;
 use Step2dev\LazySeoStructuredData\Services\SchemaService;
+use Step2dev\LazySeoStructuredData\Support\JsonLdRenderer;
+use Step2dev\LazySeoStructuredData\Support\JsonOptions;
+use Step2dev\LazySeoStructuredData\Support\SchemaCleaner;
+use Step2dev\LazySeoStructuredData\Support\SchemaGraph;
+use Step2dev\LazySeoStructuredData\Support\SchemaTypeResolver;
 use Step2dev\LazySeoStructuredData\View\Components\JsonLdComponent;
 
 class LazySeoStructuredDataServiceProvider extends PackageServiceProvider
@@ -21,8 +33,25 @@ class LazySeoStructuredDataServiceProvider extends PackageServiceProvider
 
     public function packageRegistered(): void
     {
-        $this->app->singleton(SchemaService::class);
-        $this->app->singleton(JsonLdService::class);
+        foreach ([
+            SchemaCleaner::class,
+            JsonOptions::class,
+            JsonLdRenderer::class,
+            SchemaGraph::class,
+            SchemaTypeResolver::class,
+            OfferSchemaBuilder::class,
+            IdentitySchemaBuilder::class,
+            ListSchemaBuilder::class,
+            PageSchemaBuilder::class,
+            ContentSchemaBuilder::class,
+            CommerceSchemaBuilder::class,
+            EventSchemaBuilder::class,
+            SchemaService::class,
+            JsonLdService::class,
+        ] as $abstract) {
+            $this->app->singleton($abstract);
+        }
+
         $this->app->alias(SchemaService::class, 'lazy-seo-structured-data.schema');
         $this->app->alias(JsonLdService::class, 'lazy-seo-structured-data.jsonld');
     }

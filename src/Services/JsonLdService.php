@@ -2,9 +2,15 @@
 
 namespace Step2dev\LazySeoStructuredData\Services;
 
+use Illuminate\Contracts\Support\Arrayable;
+use Step2dev\LazySeoStructuredData\Support\JsonLdRenderer;
+
 class JsonLdService
 {
-    public function __construct(protected SchemaService $schema) {}
+    public function __construct(
+        private readonly SchemaService $schema,
+        private readonly JsonLdRenderer $renderer,
+    ) {}
 
     public function generateForPage(array $data): string
     {
@@ -16,24 +22,28 @@ class JsonLdService
         return $this->schema->make($type, $data);
     }
 
-    /**
-     * @param  array<int, array|\Illuminate\Contracts\Support\Arrayable>  $schemas
-     */
     public function graph(array $schemas): array
     {
         return $this->schema->graph($schemas);
     }
 
-    public function script(string $type = 'webPage', array $data = []): string
+    public function encode(array|Arrayable $schema): string
     {
-        return '<script type="application/ld+json">'.$this->schema->toJson($this->make($type, $data)).'</script>';
+        return $this->renderer->encode($schema);
     }
 
-    /**
-     * @param  array<int, array|\Illuminate\Contracts\Support\Arrayable>  $schemas
-     */
+    public function render(array|Arrayable $schema): string
+    {
+        return $this->renderer->script($schema);
+    }
+
+    public function script(string $type = 'webPage', array $data = []): string
+    {
+        return $this->render($this->make($type, $data));
+    }
+
     public function scriptGraph(array $schemas): string
     {
-        return '<script type="application/ld+json">'.$this->schema->toJson($this->graph($schemas)).'</script>';
+        return $this->render($this->graph($schemas));
     }
 }

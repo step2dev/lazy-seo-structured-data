@@ -17,10 +17,12 @@ class JsonLdComponent extends Component
 
     public function render(): View
     {
+        $jsonLd = app(JsonLdService::class);
+
         return app(ViewFactory::class)->make('lazy-seo-structured-data::components.jsonld', [
-            'schema' => $this->graph !== []
-                ? app(JsonLdService::class)->graph($this->graph)
-                : app(JsonLdService::class)->make($this->type, $this->data),
+            'jsonLd' => $this->graph !== []
+                ? $jsonLd->scriptGraph($this->graph)
+                : $jsonLd->script($this->type, $this->data),
         ]);
     }
 }

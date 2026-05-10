@@ -3,416 +3,84 @@
 namespace Step2dev\LazySeoStructuredData\Services;
 
 use Illuminate\Contracts\Support\Arrayable;
-use InvalidArgumentException;
+use LogicException;
+use Step2dev\LazySeoStructuredData\Builders\CommerceSchemaBuilder;
+use Step2dev\LazySeoStructuredData\Builders\ContentSchemaBuilder;
+use Step2dev\LazySeoStructuredData\Builders\EventSchemaBuilder;
+use Step2dev\LazySeoStructuredData\Builders\IdentitySchemaBuilder;
+use Step2dev\LazySeoStructuredData\Builders\ListSchemaBuilder;
+use Step2dev\LazySeoStructuredData\Builders\PageSchemaBuilder;
+use Step2dev\LazySeoStructuredData\Support\JsonLdRenderer;
+use Step2dev\LazySeoStructuredData\Support\SchemaGraph;
+use Step2dev\LazySeoStructuredData\Support\SchemaTypeResolver;
 
 class SchemaService
 {
-    /**
-     * @var array<string, string>
-     */
-    protected array $typeMethods = [
-        'article' => 'article',
-        'blogposting' => 'blogPosting',
-        'blogpost' => 'blogPosting',
-        'product' => 'product',
-        'organization' => 'organization',
-        'person' => 'person',
-        'localbusiness' => 'localBusiness',
-        'website' => 'webSite',
-        'webpage' => 'webPage',
-        'collectionpage' => 'collectionPage',
-        'breadcrumblist' => 'breadcrumbList',
-        'breadcrumbs' => 'breadcrumbList',
-        'faqpage' => 'faqPage',
-        'faq' => 'faqPage',
-        'itemlist' => 'itemList',
-        'list' => 'itemList',
-        'event' => 'event',
-        'recipe' => 'recipe',
-    ];
+    public function __construct(
+        private readonly SchemaTypeResolver $types,
+        private readonly SchemaGraph $graph,
+        private readonly JsonLdRenderer $jsonLd,
+        private readonly PageSchemaBuilder $pages,
+        private readonly ContentSchemaBuilder $content,
+        private readonly CommerceSchemaBuilder $commerce,
+        private readonly IdentitySchemaBuilder $identity,
+        private readonly ListSchemaBuilder $lists,
+        private readonly EventSchemaBuilder $events,
+    ) {}
 
-    public function make(string $type, array $data = []): array
+    public function make(string $type = 'webPage', array $data = []): array
     {
-        $method = $this->methodName($this->normalizeType($type), $type);
+        [$builderClass, $method] = $this->types->resolve($type);
+        $builder = $this->builder($builderClass);
 
-        return $this->{$method}($data);
+        return $builder->{$method}($data);
     }
 
-    /**
-     * @param  array<int, array|Arrayable>  $schemas
-     */
     public function graph(array $schemas): array
     {
-        if (array_key_exists('@graph', $schemas)) {
-            return $this->clean($schemas);
-        }
-
-        $graph = collect($schemas)
-            ->map(function (array|Arrayable $schema): array {
-                if ($schema instanceof Arrayable) {
-                    $schema = $schema->toArray();
-                }
-
-                unset($schema['@context']);
-
-                return $this->clean($schema);
-            })
-            ->filter()
-            ->values()
-            ->all();
-
-        return $this->clean([
-            '@context' => 'https://schema.org',
-            '@graph' => $graph,
-        ]);
-    }
-
-    public function script(string $type, array $data = []): string
-    {
-        return '<script type="application/ld+json">'.$this->toJson($this->make($type, $data)).'</script>';
-    }
-
-    public function scriptGraph(array $schemas): string
-    {
-        return '<script type="application/ld+json">'.$this->toJson($this->graph($schemas)).'</script>';
+        return $this->graph->make($schemas);
     }
 
     public function toJson(array|Arrayable $schema): string
     {
-        if ($schema instanceof Arrayable) {
-            $schema = $schema->toArray();
-        }
-
-        return json_encode($this->clean($schema), $this->jsonFlags()) ?: '{}';
+        return $this->jsonLd->encode($schema);
     }
 
-    public function webPage(array $data = []): array
+    public function script(string $type = 'webPage', array $data = []): string
     {
-        return $this->base('WebPage', [
-            'name' => $data['name'] ?? $data['title'] ?? config('lazy-seo-structured-data.defaults.title', config('lazy-seo-structured-data.organization.name', config('app.name'))),
-            'description' => $data['description'] ?? config('lazy-seo-structured-data.defaults.description', ''),
-            'url' => $data['url'] ?? request()->fullUrl(),
-        ], $data);
+        return $this->jsonLd->script($this->make($type, $data));
     }
 
-    public function collectionPage(array $data = []): array
+    public function scriptGraph(array $schemas): string
     {
-        return $this->base('CollectionPage', [
-            'name' => $data['name'] ?? $data['title'] ?? null,
-            'description' => $data['description'] ?? null,
-            'url' => $data['url'] ?? request()->fullUrl(),
-            'mainEntity' => isset($data['items']) ? $this->itemList($data['items']) : null,
-        ], $data, ['title']);
+        return $this->jsonLd->script($this->graph($schemas));
     }
 
-    public function article(array $data = []): array
+    public function webPage(array $data = []): array { return $this->make('webPage', $data); }
+    public function collectionPage(array $data = []): array { return $this->make('collectionPage', $data); }
+    public function article(array $data = []): array { return $this->make('article', $data); }
+    public function blogPosting(array $data = []): array { return $this->make('blogPosting', $data); }
+    public function product(array $data = []): array { return $this->make('product', $data); }
+    public function organization(array $data = []): array { return $this->make('organization', $data); }
+    public function person(array $data = []): array { return $this->make('person', $data); }
+    public function localBusiness(array $data = []): array { return $this->make('localBusiness', $data); }
+    public function webSite(array $data = []): array { return $this->make('webSite', $data); }
+    public function breadcrumbList(array $items = []): array { return $this->make('breadcrumbs', ['items' => $items]); }
+    public function faqPage(array $items = []): array { return $this->make('faq', ['items' => $items]); }
+    public function itemList(array $items = []): array { return $this->make('itemList', ['items' => $items]); }
+    public function event(array $data = []): array { return $this->make('event', $data); }
+    public function recipe(array $data = []): array { return $this->make('recipe', $data); }
+
+    private function builder(string $builderClass): object
     {
-        return $this->base($data['type'] ?? 'Article', [
-            'headline' => $data['headline'] ?? $data['title'] ?? null,
-            'description' => $data['description'] ?? null,
-            'image' => $data['image'] ?? null,
-            'datePublished' => $data['date_published'] ?? $data['datePublished'] ?? null,
-            'dateModified' => $data['date_modified'] ?? $data['dateModified'] ?? null,
-            'author' => $this->personOrOrganization($data['author'] ?? null),
-            'publisher' => $this->organization($data['publisher'] ?? []),
-            'mainEntityOfPage' => $data['url'] ?? request()->fullUrl(),
-        ], $data, [
-            'author',
-            'publisher',
-            'headline',
-            'title',
-            'date_published',
-            'date_modified',
-        ]);
-    }
-
-    public function blogPosting(array $data = []): array
-    {
-        return $this->article(array_replace(['type' => 'BlogPosting'], $data));
-    }
-
-    public function product(array $data = []): array
-    {
-        return $this->base('Product', [
-            'name' => $data['name'] ?? $data['title'] ?? null,
-            'description' => $data['description'] ?? null,
-            'image' => $data['image'] ?? null,
-            'sku' => $data['sku'] ?? null,
-            'brand' => isset($data['brand']) ? $this->organization(['name' => $data['brand']]) : null,
-            'offers' => $this->offers($data['offers'] ?? $data),
-        ], $data, [
-            'brand',
-            'offers',
-            'title',
-            'price',
-            'price_currency',
-            'priceCurrency',
-            'availability',
-        ]);
-    }
-
-    public function organization(array $data = []): array
-    {
-        return $this->base($data['type'] ?? 'Organization', [
-            'name' => $data['name'] ?? config('lazy-seo-structured-data.organization.name', config('app.name')),
-            'url' => $data['url'] ?? config('lazy-seo-structured-data.organization.url', config('app.url')),
-            'logo' => $data['logo'] ?? config('lazy-seo-structured-data.organization.logo'),
-            'sameAs' => $data['same_as'] ?? $data['sameAs'] ?? config('lazy-seo-structured-data.organization.same_as', []),
-        ], $data, ['same_as']);
-    }
-
-    public function person(array $data = []): array
-    {
-        return $this->base('Person', [
-            'name' => $data['name'] ?? null,
-            'url' => $data['url'] ?? null,
-            'image' => $data['image'] ?? null,
-            'sameAs' => $data['same_as'] ?? $data['sameAs'] ?? null,
-        ], $data, ['same_as']);
-    }
-
-    public function localBusiness(array $data = []): array
-    {
-        return $this->base('LocalBusiness', [
-            'name' => $data['name'] ?? config('lazy-seo-structured-data.organization.name', config('app.name')),
-            'url' => $data['url'] ?? config('lazy-seo-structured-data.organization.url', config('app.url')),
-            'telephone' => $data['telephone'] ?? $data['phone'] ?? null,
-            'address' => $data['address'] ?? null,
-            'openingHours' => $data['opening_hours'] ?? $data['openingHours'] ?? null,
-        ], $data, ['phone', 'opening_hours']);
-    }
-
-    public function webSite(array $data = []): array
-    {
-        return $this->base('WebSite', [
-            'name' => $data['name'] ?? config('lazy-seo-structured-data.organization.name', config('app.name')),
-            'url' => $data['url'] ?? config('lazy-seo-structured-data.organization.url', config('app.url')),
-            'potentialAction' => $this->searchAction($data['search_url'] ?? $data['searchUrl'] ?? null),
-        ], $data);
-    }
-
-    public function breadcrumbList(array $items = []): array
-    {
-        if (array_key_exists('items', $items)) {
-            $items = $items['items'];
-        }
-
-        return $this->base('BreadcrumbList', [
-            'itemListElement' => collect($items)->values()->map(function (array|string $item, int $index): array {
-                $name = is_array($item) ? ($item['name'] ?? $item['title'] ?? '') : (string) $item;
-                $url = is_array($item) ? ($item['url'] ?? $item['item'] ?? null) : null;
-
-                return $this->clean([
-                    '@type' => 'ListItem',
-                    'position' => $index + 1,
-                    'name' => $name,
-                    'item' => $url,
-                ]);
-            })->all(),
-        ]);
-    }
-
-    public function faqPage(array $items = []): array
-    {
-        if (array_key_exists('items', $items)) {
-            $items = $items['items'];
-        }
-
-        return $this->base('FAQPage', [
-            'mainEntity' => collect($items)->map(function (array $item): array {
-                return $this->clean([
-                    '@type' => 'Question',
-                    'name' => $item['question'] ?? $item['name'] ?? null,
-                    'acceptedAnswer' => [
-                        '@type' => 'Answer',
-                        'text' => $item['answer'] ?? $item['text'] ?? null,
-                    ],
-                ]);
-            })->values()->all(),
-        ]);
-    }
-
-    public function itemList(array $items = []): array
-    {
-        if (array_key_exists('items', $items)) {
-            $items = $items['items'];
-        }
-
-        return $this->base('ItemList', [
-            'itemListElement' => collect($items)->values()->map(function (array|string $item, int $index): array {
-                if (is_array($item)) {
-                    return $this->clean(array_replace([
-                        '@type' => 'ListItem',
-                        'position' => $index + 1,
-                    ], $item));
-                }
-
-                return [
-                    '@type' => 'ListItem',
-                    'position' => $index + 1,
-                    'name' => $item,
-                ];
-            })->all(),
-        ]);
-    }
-
-    public function event(array $data = []): array
-    {
-        return $this->base('Event', [
-            'name' => $data['name'] ?? $data['title'] ?? null,
-            'description' => $data['description'] ?? null,
-            'startDate' => $data['start_date'] ?? $data['startDate'] ?? null,
-            'endDate' => $data['end_date'] ?? $data['endDate'] ?? null,
-            'eventStatus' => $data['event_status'] ?? $data['eventStatus'] ?? null,
-            'eventAttendanceMode' => $data['event_attendance_mode'] ?? $data['eventAttendanceMode'] ?? null,
-            'location' => $data['location'] ?? null,
-            'image' => $data['image'] ?? null,
-            'url' => $data['url'] ?? null,
-            'organizer' => $this->personOrOrganization($data['organizer'] ?? null),
-            'offers' => $this->offers($data['offers'] ?? $data),
-        ], $data, [
-            'title',
-            'start_date',
-            'end_date',
-            'event_status',
-            'event_attendance_mode',
-            'organizer',
-            'offers',
-            'price',
-            'price_currency',
-            'priceCurrency',
-            'availability',
-        ]);
-    }
-
-    public function recipe(array $data = []): array
-    {
-        return $this->base('Recipe', [
-            'name' => $data['name'] ?? $data['title'] ?? null,
-            'description' => $data['description'] ?? null,
-            'image' => $data['image'] ?? null,
-            'author' => $this->personOrOrganization($data['author'] ?? null),
-            'datePublished' => $data['date_published'] ?? $data['datePublished'] ?? null,
-            'prepTime' => $data['prep_time'] ?? $data['prepTime'] ?? null,
-            'cookTime' => $data['cook_time'] ?? $data['cookTime'] ?? null,
-            'totalTime' => $data['total_time'] ?? $data['totalTime'] ?? null,
-            'recipeYield' => $data['recipe_yield'] ?? $data['recipeYield'] ?? null,
-            'recipeIngredient' => $data['ingredients'] ?? $data['recipeIngredient'] ?? null,
-            'recipeInstructions' => $data['instructions'] ?? $data['recipeInstructions'] ?? null,
-        ], $data, [
-            'title',
-            'author',
-            'date_published',
-            'prep_time',
-            'cook_time',
-            'total_time',
-            'recipe_yield',
-            'ingredients',
-            'instructions',
-        ]);
-    }
-
-    protected function offers(array $data): ?array
-    {
-        if (! isset($data['price']) && ! isset($data['priceCurrency']) && ! isset($data['price_currency'])) {
-            return null;
-        }
-
-        return $this->clean([
-            '@type' => 'Offer',
-            'price' => $data['price'] ?? null,
-            'priceCurrency' => $data['price_currency'] ?? $data['priceCurrency'] ?? 'USD',
-            'availability' => $data['availability'] ?? 'https://schema.org/InStock',
-            'url' => $data['url'] ?? request()->fullUrl(),
-        ]);
-    }
-
-    protected function searchAction(?string $searchUrl): ?array
-    {
-        if (! $searchUrl) {
-            return null;
-        }
-
-        return [
-            '@type' => 'SearchAction',
-            'target' => $searchUrl,
-            'query-input' => 'required name=search_term_string',
-        ];
-    }
-
-    protected function personOrOrganization(mixed $value): mixed
-    {
-        if ($value === null || $value === '') {
-            return null;
-        }
-
-        if (is_array($value)) {
-            return $this->base($value['type'] ?? 'Person', ['name' => $value['name'] ?? null], $value);
-        }
-
-        return ['@type' => 'Person', 'name' => (string) $value];
-    }
-
-    /**
-     * @param  array<int, string>  $consumed
-     */
-    protected function base(string $type, array $schema, array $data = [], array $consumed = []): array
-    {
-        foreach (array_merge(['type', 'items', 'search_url', 'searchUrl'], $consumed) as $key) {
-            unset($data[$key]);
-        }
-
-        return $this->clean(array_replace([
-            '@context' => 'https://schema.org',
-            '@type' => $type,
-        ], $schema, $data));
-    }
-
-    protected function clean(array $data): array
-    {
-        return array_filter($data, function (mixed $value): bool {
-            if ($value === null || $value === '') {
-                return false;
-            }
-
-            return ! (is_array($value) && $value === []);
-        });
-    }
-
-    protected function normalizeType(string $type): string
-    {
-        return str($type)->replace(['-', '_'], '')->lower()->toString();
-    }
-
-    protected function methodName(string $normalizedType, string $originalType): string
-    {
-        if (array_key_exists($normalizedType, $this->typeMethods)) {
-            return $this->typeMethods[$normalizedType];
-        }
-
-        if (config('lazy-seo-structured-data.unknown_type_behavior', 'fallback') === 'exception') {
-            throw new InvalidArgumentException("Unknown structured data type [{$originalType}].");
-        }
-
-        return 'webPage';
-    }
-
-    protected function jsonFlags(): int
-    {
-        $flags = 0;
-
-        if ((bool) config('lazy-seo-structured-data.json.pretty', true)) {
-            $flags |= JSON_PRETTY_PRINT;
-        }
-
-        if ((bool) config('lazy-seo-structured-data.json.unescaped_unicode', true)) {
-            $flags |= JSON_UNESCAPED_UNICODE;
-        }
-
-        if ((bool) config('lazy-seo-structured-data.json.unescaped_slashes', true)) {
-            $flags |= JSON_UNESCAPED_SLASHES;
-        }
-
-        return $flags;
+        return match ($builderClass) {
+            PageSchemaBuilder::class => $this->pages,
+            ContentSchemaBuilder::class => $this->content,
+            CommerceSchemaBuilder::class => $this->commerce,
+            IdentitySchemaBuilder::class => $this->identity,
+            ListSchemaBuilder::class => $this->lists,
+            EventSchemaBuilder::class => $this->events,
+            default => throw new LogicException("Unknown schema builder [{$builderClass}]."),
+        };
     }
 }

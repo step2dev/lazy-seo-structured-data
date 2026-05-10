@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Contracts\Support\Arrayable;
 use Step2dev\LazySeoStructuredData\Services\JsonLdService;
 use Step2dev\LazySeoStructuredData\Services\SchemaService;
 
@@ -10,6 +11,13 @@ if (! function_exists('seo_schema')) {
     }
 }
 
+if (! function_exists('seo_schema_graph')) {
+    function seo_schema_graph(array $schemas): array
+    {
+        return app(SchemaService::class)->graph($schemas);
+    }
+}
+
 if (! function_exists('seo_jsonld')) {
     function seo_jsonld(string $type = 'webPage', array $data = []): string
     {
@@ -17,10 +25,14 @@ if (! function_exists('seo_jsonld')) {
     }
 }
 
+if (! function_exists('seo_jsonld_render')) {
+    function seo_jsonld_render(array|Arrayable $schema): string
+    {
+        return app(JsonLdService::class)->render($schema);
+    }
+}
+
 if (! function_exists('seo_jsonld_graph')) {
-    /**
-     * @param  array<int, array|\Illuminate\Contracts\Support\Arrayable>  $schemas
-     */
     function seo_jsonld_graph(array $schemas): string
     {
         return app(JsonLdService::class)->scriptGraph($schemas);

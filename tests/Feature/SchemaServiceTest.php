@@ -128,3 +128,36 @@ it('renders json ld graph script', function (): void {
         ->and($html)->toContain('Organization')
         ->and($html)->toContain('WebSite');
 });
+
+it('removes nested empty values recursively', function (): void {
+    $json = app(SchemaService::class)->toJson([
+        '@context' => 'https://schema.org',
+        '@type' => 'FAQPage',
+        'mainEntity' => [
+            [
+                '@type' => 'Question',
+                'name' => 'Question?',
+                'acceptedAnswer' => [
+                    '@type' => 'Answer',
+                    'text' => null,
+                    'empty' => '',
+                ],
+            ],
+        ],
+    ]);
+
+    expect($json)->toContain('Question?')
+        ->and($json)->not->toContain('null')
+        ->and($json)->not->toContain('empty');
+});
+
+it('does not leak nested context into embedded schemas', function (): void {
+    $schema = app(SchemaService::class)->make('product', [
+        'name' => 'Laravel SEO Package',
+        'brand' => 'Step2Dev',
+        'price' => '49.00',
+    ]);
+
+    expect($schema['brand'])->not->toHaveKey('@context')
+        ->and($schema['offers'])->not->toHaveKey('@context');
+});
