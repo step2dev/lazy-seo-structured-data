@@ -1,21 +1,17 @@
-## Unreleased
-
-- Added Schema.org field metadata for built-in schema types.
-- Added `Schema::metadata()` and `Schema::fields()`.
-- Updated `lazy-seo-structured-data:types` to show required, recommended, and optional fields.
-- Documented supported schema types and common Schema.org fields.
-
 # Changelog
 
-All notable changes to `lazy-seo-structured-data` will be documented in this file.
+## Unreleased
 
-## v1.0.0
+- Added `Schema::debug()` for schema, JSON, metadata, and missing field inspection.
+- Added `SearchAction` as a first-class Schema.org type and `Schema::searchAction()` helper method.
+- Added common nested object types: `Brand`, `ImageObject`, `PostalAddress`, `ContactPoint`, `AggregateRating`, `Rating`, `Review`, `Question`, `Answer`, `ListItem`, `Place`, `VirtualLocation`, and `GeoCoordinates`.
+- Added `NestedSchemaBuilder` for reusable embedded Schema.org objects.
+- Improved Product, Event, Organization, LocalBusiness, WebSite, WebPage, CollectionPage, FAQPage, Article, BlogPosting, Recipe, and Offer builders with nested object normalization.
+- Expanded schema type metadata with required, recommended, optional, rich result notes, and Schema.org URLs.
+- Expanded README with typed examples for Article, Product, WebSite/SearchAction, Event, Virtual Event, Organization, FAQPage, and BreadcrumbList.
 
-- Added clean Schema.org-first public API.
-- Added JSON-LD rendering.
-- Added schema graph support.
-- Added custom schema registration.
-- Added strict unknown type mode.
-- Added Laravel Blade component.
-- Added Artisan command for listing available schema types.
-- Removed legacy helpers, deprecated script aliases, duplicate JSON-LD service, and legacy Blade component aliases.
+## Previous
+
+- Removed legacy component aliases and deprecated JSON-LD APIs.
+- Added schema field metadata and `lazy-seo-structured-data:types` command.
+- Refactored schema builders, JSON-LD rendering, graph support, and public API.

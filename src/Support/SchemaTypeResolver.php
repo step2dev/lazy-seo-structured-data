@@ -8,6 +8,7 @@ use Step2dev\LazySeoStructuredData\Builders\ContentSchemaBuilder;
 use Step2dev\LazySeoStructuredData\Builders\EventSchemaBuilder;
 use Step2dev\LazySeoStructuredData\Builders\IdentitySchemaBuilder;
 use Step2dev\LazySeoStructuredData\Builders\ListSchemaBuilder;
+use Step2dev\LazySeoStructuredData\Builders\NestedSchemaBuilder;
 use Step2dev\LazySeoStructuredData\Builders\OfferSchemaBuilder;
 use Step2dev\LazySeoStructuredData\Builders\PageSchemaBuilder;
 
@@ -104,6 +105,62 @@ final class SchemaTypeResolver
             'collectionpage' => [
                 'schemaType' => 'CollectionPage',
                 'handler' => [PageSchemaBuilder::class, 'collectionPage'],
+            ],
+            'searchaction' => [
+                'schemaType' => 'SearchAction',
+                'handler' => [NestedSchemaBuilder::class, 'searchAction'],
+            ],
+            'brand' => [
+                'schemaType' => 'Brand',
+                'handler' => [NestedSchemaBuilder::class, 'brand'],
+            ],
+            'imageobject' => [
+                'schemaType' => 'ImageObject',
+                'handler' => [NestedSchemaBuilder::class, 'imageObject'],
+            ],
+            'postaladdress' => [
+                'schemaType' => 'PostalAddress',
+                'handler' => [NestedSchemaBuilder::class, 'postalAddress'],
+            ],
+            'contactpoint' => [
+                'schemaType' => 'ContactPoint',
+                'handler' => [NestedSchemaBuilder::class, 'contactPoint'],
+            ],
+            'aggregaterating' => [
+                'schemaType' => 'AggregateRating',
+                'handler' => [NestedSchemaBuilder::class, 'aggregateRating'],
+            ],
+            'rating' => [
+                'schemaType' => 'Rating',
+                'handler' => [NestedSchemaBuilder::class, 'rating'],
+            ],
+            'review' => [
+                'schemaType' => 'Review',
+                'handler' => [NestedSchemaBuilder::class, 'review'],
+            ],
+            'question' => [
+                'schemaType' => 'Question',
+                'handler' => [NestedSchemaBuilder::class, 'question'],
+            ],
+            'answer' => [
+                'schemaType' => 'Answer',
+                'handler' => [NestedSchemaBuilder::class, 'answer'],
+            ],
+            'listitem' => [
+                'schemaType' => 'ListItem',
+                'handler' => [NestedSchemaBuilder::class, 'listItem'],
+            ],
+            'place' => [
+                'schemaType' => 'Place',
+                'handler' => [NestedSchemaBuilder::class, 'place'],
+            ],
+            'virtuallocation' => [
+                'schemaType' => 'VirtualLocation',
+                'handler' => [NestedSchemaBuilder::class, 'virtualLocation'],
+            ],
+            'geocoordinates' => [
+                'schemaType' => 'GeoCoordinates',
+                'handler' => [NestedSchemaBuilder::class, 'geoCoordinates'],
             ],
         ];
     }

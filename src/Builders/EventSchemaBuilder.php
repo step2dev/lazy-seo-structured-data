@@ -10,6 +10,7 @@ final class EventSchemaBuilder extends AbstractSchemaBuilder
         SchemaCleaner $cleaner,
         private readonly IdentitySchemaBuilder $identity,
         private readonly OfferSchemaBuilder $offers,
+        private readonly NestedSchemaBuilder $nested,
     ) {
         parent::__construct($cleaner);
     }
@@ -23,11 +24,26 @@ final class EventSchemaBuilder extends AbstractSchemaBuilder
             'endDate' => $data['end_date'] ?? $data['endDate'] ?? null,
             'eventStatus' => $data['event_status'] ?? $data['eventStatus'] ?? null,
             'eventAttendanceMode' => $data['event_attendance_mode'] ?? $data['eventAttendanceMode'] ?? null,
-            'location' => $data['location'] ?? null,
+            'location' => $this->location($data['location'] ?? null),
             'image' => $data['image'] ?? null,
             'url' => $data['url'] ?? null,
             'organizer' => $this->identity->personOrOrganization($data['organizer'] ?? null),
-            'offers' => $this->offers->offer($data['offers'] ?? $data),
-        ], $data, ['title', 'start_date', 'end_date', 'event_status', 'event_attendance_mode', 'organizer', 'offers', 'price', 'price_currency', 'priceCurrency', 'availability']);
+            'performer' => $this->identity->personOrOrganization($data['performer'] ?? null),
+            'offers' => $this->offers->offerOrNull($data['offers'] ?? $data),
+        ], $data, ['title', 'start_date', 'end_date', 'event_status', 'event_attendance_mode', 'location', 'organizer', 'performer', 'offers', 'price', 'price_currency', 'priceCurrency', 'availability']);
+    }
+
+    private function location(mixed $location): mixed
+    {
+        if (! is_array($location)) {
+            return $location;
+        }
+
+        $type = $location['@type'] ?? $location['type'] ?? 'Place';
+
+        return match ($type) {
+            'VirtualLocation' => $this->embedded($this->nested->virtualLocation($location)),
+            default => $this->embedded($this->nested->place($location)),
+        };
     }
 }

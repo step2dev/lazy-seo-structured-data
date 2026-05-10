@@ -10,6 +10,7 @@ use Step2dev\LazySeoStructuredData\Builders\ContentSchemaBuilder;
 use Step2dev\LazySeoStructuredData\Builders\EventSchemaBuilder;
 use Step2dev\LazySeoStructuredData\Builders\IdentitySchemaBuilder;
 use Step2dev\LazySeoStructuredData\Builders\ListSchemaBuilder;
+use Step2dev\LazySeoStructuredData\Builders\NestedSchemaBuilder;
 use Step2dev\LazySeoStructuredData\Builders\OfferSchemaBuilder;
 use Step2dev\LazySeoStructuredData\Builders\PageSchemaBuilder;
 use Step2dev\LazySeoStructuredData\Commands\ListSchemaTypesCommand;
@@ -47,6 +48,7 @@ class LazySeoStructuredDataServiceProvider extends PackageServiceProvider
             SchemaTypeMetadata::class,
             SchemaTypeResolver::class,
             OfferSchemaBuilder::class,
+            NestedSchemaBuilder::class,
             IdentitySchemaBuilder::class,
             ListSchemaBuilder::class,
             PageSchemaBuilder::class,

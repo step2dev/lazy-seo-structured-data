@@ -189,6 +189,251 @@ final class SchemaTypeMetadata
                 ],
             ],
 
+            'SearchAction' => [
+                'type' => 'SearchAction',
+                'schema_org' => 'https://schema.org/SearchAction',
+                'rich_result' => false,
+                'notes' => 'Embedded action commonly used as WebSite.potentialAction for site search.',
+                'required' => [
+                    'target',
+                    'query-input',
+                ],
+                'recommended' => [
+                    'target',
+                    'query-input',
+                ],
+                'optional' => [
+                    'name',
+                ],
+            ],
+
+            'Brand' => [
+                'type' => 'Brand',
+                'schema_org' => 'https://schema.org/Brand',
+                'rich_result' => false,
+                'notes' => 'Embedded identity type commonly used inside Product.brand.',
+                'required' => [],
+                'recommended' => [
+                    'name',
+                    'url',
+                    'logo',
+                    'sameAs',
+                ],
+                'optional' => [
+                    'description',
+                    'slogan',
+                ],
+            ],
+
+            'ImageObject' => [
+                'type' => 'ImageObject',
+                'schema_org' => 'https://schema.org/ImageObject',
+                'rich_result' => false,
+                'notes' => 'Embedded media type for page, article, recipe, product, and organization images.',
+                'required' => [],
+                'recommended' => [
+                    'url',
+                    'contentUrl',
+                    'width',
+                    'height',
+                ],
+                'optional' => [
+                    'caption',
+                    'representativeOfPage',
+                    'thumbnail',
+                ],
+            ],
+
+            'PostalAddress' => [
+                'type' => 'PostalAddress',
+                'schema_org' => 'https://schema.org/PostalAddress',
+                'rich_result' => false,
+                'notes' => 'Embedded address type for Organization, LocalBusiness, Person, and Place.',
+                'required' => [],
+                'recommended' => [
+                    'streetAddress',
+                    'addressLocality',
+                    'addressRegion',
+                    'postalCode',
+                    'addressCountry',
+                ],
+                'optional' => [
+                    'postOfficeBoxNumber',
+                ],
+            ],
+
+            'ContactPoint' => [
+                'type' => 'ContactPoint',
+                'schema_org' => 'https://schema.org/ContactPoint',
+                'rich_result' => false,
+                'notes' => 'Embedded contact type for Organization and LocalBusiness support/sales contacts.',
+                'required' => [],
+                'recommended' => [
+                    'telephone',
+                    'contactType',
+                    'email',
+                    'areaServed',
+                    'availableLanguage',
+                ],
+                'optional' => [
+                    'contactOption',
+                    'hoursAvailable',
+                    'productSupported',
+                ],
+            ],
+
+            'AggregateRating' => [
+                'type' => 'AggregateRating',
+                'schema_org' => 'https://schema.org/AggregateRating',
+                'rich_result' => false,
+                'notes' => 'Embedded rating summary commonly used inside Product, Recipe, LocalBusiness, and Review targets.',
+                'required' => [],
+                'recommended' => [
+                    'ratingValue',
+                    'reviewCount',
+                    'ratingCount',
+                    'bestRating',
+                    'worstRating',
+                ],
+                'optional' => [],
+            ],
+
+            'Rating' => [
+                'type' => 'Rating',
+                'schema_org' => 'https://schema.org/Rating',
+                'rich_result' => false,
+                'notes' => 'Embedded single rating type commonly used inside Review.reviewRating.',
+                'required' => [],
+                'recommended' => [
+                    'ratingValue',
+                    'bestRating',
+                    'worstRating',
+                ],
+                'optional' => [],
+            ],
+
+            'Review' => [
+                'type' => 'Review',
+                'schema_org' => 'https://schema.org/Review',
+                'rich_result' => false,
+                'notes' => 'Embedded review type commonly used inside Product, Recipe, and LocalBusiness.',
+                'required' => [],
+                'recommended' => [
+                    'author',
+                    'reviewRating',
+                    'reviewBody',
+                    'datePublished',
+                ],
+                'optional' => [
+                    'name',
+                    'publisher',
+                    'itemReviewed',
+                ],
+            ],
+
+            'Question' => [
+                'type' => 'Question',
+                'schema_org' => 'https://schema.org/Question',
+                'rich_result' => false,
+                'notes' => 'Embedded type commonly used inside FAQPage.mainEntity.',
+                'required' => [
+                    'name',
+                    'acceptedAnswer',
+                ],
+                'recommended' => [
+                    'acceptedAnswer.text',
+                ],
+                'optional' => [
+                    'answerCount',
+                    'suggestedAnswer',
+                ],
+            ],
+
+            'Answer' => [
+                'type' => 'Answer',
+                'schema_org' => 'https://schema.org/Answer',
+                'rich_result' => false,
+                'notes' => 'Embedded type commonly used inside Question.acceptedAnswer.',
+                'required' => [
+                    'text',
+                ],
+                'recommended' => [
+                    'text',
+                ],
+                'optional' => [
+                    'url',
+                    'dateCreated',
+                    'author',
+                ],
+            ],
+
+            'ListItem' => [
+                'type' => 'ListItem',
+                'schema_org' => 'https://schema.org/ListItem',
+                'rich_result' => false,
+                'notes' => 'Embedded type used inside BreadcrumbList and ItemList.',
+                'required' => [],
+                'recommended' => [
+                    'position',
+                    'name',
+                    'item',
+                    'url',
+                ],
+                'optional' => [
+                    'nextItem',
+                    'previousItem',
+                ],
+            ],
+
+            'Place' => [
+                'type' => 'Place',
+                'schema_org' => 'https://schema.org/Place',
+                'rich_result' => false,
+                'notes' => 'Embedded location type commonly used inside Event.location.',
+                'required' => [],
+                'recommended' => [
+                    'name',
+                    'address',
+                    'geo',
+                    'url',
+                ],
+                'optional' => [
+                    'telephone',
+                    'hasMap',
+                    'sameAs',
+                ],
+            ],
+
+            'VirtualLocation' => [
+                'type' => 'VirtualLocation',
+                'schema_org' => 'https://schema.org/VirtualLocation',
+                'rich_result' => false,
+                'notes' => 'Embedded online location type commonly used for virtual Event.location.',
+                'required' => [],
+                'recommended' => [
+                    'url',
+                ],
+                'optional' => [
+                    'name',
+                    'description',
+                ],
+            ],
+
+            'GeoCoordinates' => [
+                'type' => 'GeoCoordinates',
+                'schema_org' => 'https://schema.org/GeoCoordinates',
+                'rich_result' => false,
+                'notes' => 'Embedded geographic coordinates type commonly used inside Place.geo or LocalBusiness.geo.',
+                'required' => [],
+                'recommended' => [
+                    'latitude',
+                    'longitude',
+                ],
+                'optional' => [
+                    'elevation',
+                ],
+            ],
+
             'Organization' => [
                 'type' => 'Organization',
                 'schema_org' => 'https://schema.org/Organization',

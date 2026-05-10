@@ -246,3 +246,91 @@ it('does not keep removed shorthand schema type aliases', function (): void {
 
     app(SchemaService::class)->make('faq');
 })->throws(InvalidArgumentException::class, 'Unknown structured data type [faq].');
+
+it('exposes debug output for schema development', function (): void {
+    $debug = app(SchemaService::class)->debug('Product', [
+        'name' => 'Laravel Package',
+    ]);
+
+    expect($debug)->toHaveKeys(['schema', 'json', 'metadata', 'fields', 'missing_required', 'missing_recommended'])
+        ->and($debug['schema']['@type'])->toBe('Product')
+        ->and($debug['metadata']['type'])->toBe('Product')
+        ->and($debug['missing_required'])->toBe([])
+        ->and($debug['missing_recommended'])->toContain('image')
+        ->and($debug['json'])->toContain('Laravel Package');
+});
+
+it('builds search action as a first class schema type', function (): void {
+    $schema = app(SchemaService::class)->make('SearchAction', [
+        'target' => 'https://example.com/search?q={search_term_string}',
+    ]);
+
+    expect($schema)->toMatchArray([
+        '@context' => 'https://schema.org',
+        '@type' => 'SearchAction',
+        'target' => 'https://example.com/search?q={search_term_string}',
+        'query-input' => 'required name=search_term_string',
+    ]);
+});
+
+it('builds website with embedded search action', function (): void {
+    $schema = app(SchemaService::class)->make('WebSite', [
+        'name' => 'Example',
+        'url' => 'https://example.com',
+        'search_url' => 'https://example.com/search?q={search_term_string}',
+    ]);
+
+    expect($schema['potentialAction'])->toMatchArray([
+        '@type' => 'SearchAction',
+        'target' => 'https://example.com/search?q={search_term_string}',
+        'query-input' => 'required name=search_term_string',
+    ])->and($schema['potentialAction'])->not->toHaveKey('@context');
+});
+
+it('builds common nested object types', function (): void {
+    $schema = app(SchemaService::class);
+
+    expect($schema->make('Brand', ['name' => 'Step2Dev'])['@type'])->toBe('Brand')
+        ->and($schema->make('ImageObject', ['url' => 'https://example.com/image.jpg'])['@type'])->toBe('ImageObject')
+        ->and($schema->make('PostalAddress', ['city' => 'Kyiv'])['@type'])->toBe('PostalAddress')
+        ->and($schema->make('ContactPoint', ['telephone' => '+380000000000'])['@type'])->toBe('ContactPoint')
+        ->and($schema->make('AggregateRating', ['ratingValue' => '5'])['@type'])->toBe('AggregateRating')
+        ->and($schema->make('Review', ['reviewBody' => 'Good'])['@type'])->toBe('Review')
+        ->and($schema->make('Question', ['name' => 'Q?', 'answer' => 'A.'])['@type'])->toBe('Question')
+        ->and($schema->make('Answer', ['text' => 'A.'])['@type'])->toBe('Answer')
+        ->and($schema->make('ListItem', ['position' => 1, 'name' => 'Home'])['@type'])->toBe('ListItem')
+        ->and($schema->make('Place', ['name' => 'Office'])['@type'])->toBe('Place')
+        ->and($schema->make('VirtualLocation', ['url' => 'https://example.com/live'])['@type'])->toBe('VirtualLocation')
+        ->and($schema->make('GeoCoordinates', ['lat' => 50.45, 'lng' => 30.52])['@type'])->toBe('GeoCoordinates');
+});
+
+it('normalizes nested objects inside product event and organization schemas', function (): void {
+    $schema = app(SchemaService::class);
+
+    $product = $schema->make('Product', [
+        'name' => 'Package',
+        'brand' => ['name' => 'Step2Dev'],
+        'aggregateRating' => ['ratingValue' => '5', 'reviewCount' => 10],
+        'review' => ['author' => 'Yurii', 'reviewBody' => 'Clean package'],
+    ]);
+
+    $event = $schema->make('Event', [
+        'name' => 'Webinar',
+        'startDate' => '2026-05-20T18:00:00+03:00',
+        'location' => ['type' => 'VirtualLocation', 'url' => 'https://example.com/live'],
+    ]);
+
+    $organization = $schema->make('Organization', [
+        'name' => 'Step2Dev',
+        'address' => ['city' => 'Kyiv', 'country' => 'UA'],
+        'contactPoint' => ['telephone' => '+380000000000', 'contactType' => 'support'],
+    ]);
+
+    expect($product['brand']['@type'])->toBe('Brand')
+        ->and($product['brand'])->not->toHaveKey('@context')
+        ->and($product['aggregateRating']['@type'])->toBe('AggregateRating')
+        ->and($product['review']['@type'])->toBe('Review')
+        ->and($event['location']['@type'])->toBe('VirtualLocation')
+        ->and($organization['address']['@type'])->toBe('PostalAddress')
+        ->and($organization['contactPoint']['@type'])->toBe('ContactPoint');
+});
